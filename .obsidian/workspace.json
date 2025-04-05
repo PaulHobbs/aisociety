@@ -170,6 +170,9 @@
   },
   "active": "0349b336e26d7d9c",
   "lastOpenFiles": [
+    "rfc/VISION.md",
+    "rfc/README.md",
+    "rfc",
     "protos/TODO.md",
     "services/workflow/schema/schema.sql",
     "services/workflow/schema",

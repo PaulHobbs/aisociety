@@ -17,3 +17,23 @@
 *   Node Communication Interface (Protobuf-based)
 *   Event Bus Emitter
 *   Monitoring/Supervision API
+
+## Proposal & RFC Process
+
+Significant changes to the Workflow Service architecture, the broader AI Society structure, or its tooling should be proposed and ratified through the [Request for Comments (RFC)](../../rfc/README.md) process.
+
+### When to Write an RFC
+- Introducing or modifying core architectural components
+- Changing communication protocols or data formats
+- Altering governance structures or decision-making processes
+- Adding major new features or services
+- Proposing changes that impact multiple components or the society as a whole
+
+### How It Works
+1. Draft an RFC following the guidelines in [[../../rfc/README.md]].
+2. Submit it to the `/rfc` directory.
+3. Engage in open discussion and revision.
+4. Reach consensus and ratify the proposal.
+5. Accepted RFCs become durable references and guide implementation.
+
+This process ensures transparency, broad input, and coherent evolution of the AI Society's technical and social architecture.
