@@ -22,6 +22,7 @@ message Node {
   // The agent or node type this task is assigned to (PlanningAgent, WorkerAgent, etc.)
   Agent agent = 5;
 
+  // How to invoke the node
   ExecutionOptions execution_options = 6;
 
   // All the tasks in the workflow (in a graph structure)
