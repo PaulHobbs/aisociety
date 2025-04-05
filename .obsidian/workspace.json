@@ -170,6 +170,7 @@
   },
   "active": "0349b336e26d7d9c",
   "lastOpenFiles": [
+    "conversations/002-role-of-humans.md",
     "conversations/001-conception.md",
     "conversations/conception.md",
     "conversations",
@@ -202,7 +203,6 @@
     "epics/TODO.md",
     "epics/README.md",
     "services/workflow/TODO.md",
-    "services/workflow/Architecture.md",
     "Untitled.canvas"
   ]
 }
