@@ -1,5 +1,6 @@
 syntax = "proto3";
 
+import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 
 package aisociety.workflow;
@@ -13,30 +14,42 @@ message Node {
   string description = 2;
 
   // IDs of parent nodes (dependencies)
-  repeated string parent_ids = 7;
+  repeated string parent_ids = 3;
 
   // IDs of child nodes (dependents)
-  repeated string child_ids = 8;
+  repeated string child_ids = 4;
 
   // The agent or node type this task is assigned to (PlanningAgent, WorkerAgent, etc.)
-  AgentIdentity assigned_agent = 3;
+  Agent agent = 5;
+
+  ExecutionOptions execution_options = 6;
 
   // All the tasks in the workflow (in a graph structure)
-  repeated Task all_tasks = 4;
+  repeated Task all_tasks = 7;
 
   // The task this node was assigned to perform
-  Task assigned_task = 5;
+  Task assigned_task = 8;
 
   // Current status of this node, including progress logs
-  Status status = 6;
+  Status status = 9;
 
   // Any changes to the nodes (ex. inserting nodes to fulfill tasks).
-  repeated NodeEdit edits = 9;
+  repeated NodeEdit edits = 10;
+}
+
+message ExecutionOptions {
+  google.protobuf.Duration timeout = 1;  
+  RetryOptions retry_options = 2;
+
+  message RetryOptions { 
+    int32 max_attempts = 1;
+    google.protobuf.Duration retry_delay = 2;
+  }
 }
 
 // Placeholder for agent identity (to be defined in detail)
-message AgentIdentity {
-  string agent_id = 1;
+message Agent {
+  string agent_id = 1;  // A unique specification fro the model
   string role = 2; // e.g., "Planner", "Worker", "Supervisor"
   string model_type = 3; // e.g., "Claude-3", "GPT-4"
 }

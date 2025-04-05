@@ -170,6 +170,8 @@
   },
   "active": "0349b336e26d7d9c",
   "lastOpenFiles": [
+    "services/workflow/schema/schema.sql",
+    "services/workflow/schema",
     "protos/workflow_node.proto",
     "research/README.md",
     "protos/README.md",
