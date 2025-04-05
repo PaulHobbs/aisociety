@@ -170,6 +170,8 @@
   },
   "active": "0349b336e26d7d9c",
   "lastOpenFiles": [
+    "rfc/proposed/003-rfc-review-process.md",
+    "rfc/TEMPLATE.md",
     "rfc/proposed/002-workflow-orchestration.md",
     "rfc/proposed/001-roles-and-representation.md",
     "rfc/proposed",
@@ -200,7 +202,6 @@
     "services/workflow/Architecture.md",
     "services/workflow/README.md",
     "services/node/README.md",
-    "services/node/TODO.md",
     "Untitled.canvas"
   ]
 }
