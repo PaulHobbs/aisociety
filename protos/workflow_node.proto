@@ -1,0 +1,97 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+package aisociety.workflow;
+
+// Represents a single node within a workflow graph
+message Node {
+  // Unique identifier for this node within the workflow
+  string node_id = 1;
+
+  // Human-readable description of the task
+  string description = 2;
+
+  // IDs of parent nodes (dependencies)
+  repeated string parent_ids = 7;
+
+  // IDs of child nodes (dependents)
+  repeated string child_ids = 8;
+
+  // The agent or node type this task is assigned to (PlanningAgent, WorkerAgent, etc.)
+  AgentIdentity assigned_agent = 3;
+
+  // All the tasks in the workflow (in a graph structure)
+  repeated Task all_tasks = 4;
+
+  // The task this node was assigned to perform
+  Task assigned_task = 5;
+
+  // Current status of this node, including progress logs
+  Status status = 6;
+
+  // Any changes to the nodes (ex. inserting nodes to fulfill tasks).
+  repeated NodeEdit edits = 9;
+}
+
+// Placeholder for agent identity (to be defined in detail)
+message AgentIdentity {
+  string agent_id = 1;
+  string role = 2; // e.g., "Planner", "Worker", "Supervisor"
+  string model_type = 3; // e.g., "Claude-3", "GPT-4"
+}
+
+// Task definition. A node fulfills a task, or updates tasks
+message Task {
+  string id = 1;  // unique id for this task
+  string goal = 2;  // name for the task
+  repeated string dependency_ids = 3;  // Upstream task neighbors 
+  repeated Result results = 4;  // can be empty
+  repeated Task subtasks = 6; // a tree of subtasks, with results
+
+  message Result {
+    Status status = 1;  // any non-0 value is complete
+    string summary = 2;  // short summary of the result
+    string output = 3;  // detailed output
+    map<string, string> artifacts = 4;  // name:url pairs of logs, files, structured results of any kind
+  }
+}
+
+enum Status {
+  UNKOWN = 0;
+  PASS = 1;
+  FAIL = 2;
+  SKIPPED = 3;  // This task was not performed
+  FILTERED = 4;  // Subcategory of skipped; this is represents filtering by a planning node
+  TASK_ERROR = 5;  // Encountered an error executing the task itself
+  INFRA_ERROR = 6;  // The agent framework encountered and error
+  TIMEOUT = 7;   // subcategory of infra error
+  CRASH = 8;  // subcategory of infra error
+}
+
+// Placeholder for node status
+message NodeStatus {
+  string state = 1; // e.g., "PENDING", "RUNNING", "COMPLETED", "FAILED"
+  string message = 2; // optional status message or error
+  int64 last_updated = 3; // timestamp (epoch millis)
+  repeated Update progress = 4;
+
+  message Update {
+    Status status = 1; // any change to status is reflected here
+    google.protobuf.Timestamp updated_millis = 2;
+    optional string message = 3;
+  }
+}
+
+message NodeEdit {
+  enum Type {
+    UNKNOWN = 0;
+    INSERT = 1;
+    DELETE = 2;
+    UPDATE = 3;
+  }
+  Type type = 5; // Type of edit
+  google.protobuf.Timestamp timestamp = 3; // When the edit was made
+  string description = 4; // Description of the edit
+  Node node = 6; // New node data (for insert/update)
+}
