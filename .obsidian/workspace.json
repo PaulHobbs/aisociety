@@ -170,6 +170,9 @@
   },
   "active": "0349b336e26d7d9c",
   "lastOpenFiles": [
+    "conversations/001-conception.md",
+    "conversations/conception.md",
+    "conversations",
     "rfc/proposed/003-rfc-review-process.md",
     "rfc/TEMPLATE.md",
     "rfc/proposed/002-workflow-orchestration.md",
@@ -200,8 +203,6 @@
     "epics/README.md",
     "services/workflow/TODO.md",
     "services/workflow/Architecture.md",
-    "services/workflow/README.md",
-    "services/node/README.md",
     "Untitled.canvas"
   ]
 }
