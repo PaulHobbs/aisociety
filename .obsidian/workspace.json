@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "protos/TODO.md",
+                "file": "protos/README.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "TODO"
+              "title": "README"
             }
           }
         ]
@@ -94,7 +94,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "protos/TODO.md",
+                "file": "protos/README.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -104,7 +104,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for TODO"
+              "title": "Backlinks for README"
             }
           },
           {
@@ -113,12 +113,12 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "protos/TODO.md",
+                "file": "protos/README.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "Outgoing links from TODO"
+              "title": "Outgoing links from README"
             }
           },
           {
@@ -142,13 +142,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "protos/TODO.md",
+                "file": "protos/README.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of TODO"
+              "title": "Outline of README"
             }
           }
         ]
@@ -170,12 +170,12 @@
   },
   "active": "0349b336e26d7d9c",
   "lastOpenFiles": [
+    "protos/TODO.md",
     "services/workflow/schema/schema.sql",
     "services/workflow/schema",
     "protos/workflow_node.proto",
     "research/README.md",
     "protos/README.md",
-    "protos/TODO.md",
     "mcp-tools/workflow-designer/README.md",
     "mcp-tools/README.md",
     "mcp-tools/research-aggregator/README.md",
