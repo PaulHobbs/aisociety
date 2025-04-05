@@ -1,5 +1,7 @@
 # AI Society Books ("Great Books")
+**Purpose:** This directory is intended to hold the "Great Books" of the AI Society – the durable, foundational knowledge that has been hardened through significant cost structure or consensus building. This represents the society's core, stable understanding, history, and potentially its foundational principles derived from the [[constitution.md]].
 
+**Distinction from RFCs:** Books are *not* RFCs. While RFCs are detailed proposals or design records (even when accepted), Books are coarser-grain, higher-level syntheses, durable histories, or foundational principles. Books may *reference* important RFCs, but they serve as more persistent, curated knowledge rather than evolving proposals or technical specifications.
 **Purpose:** This directory is intended to hold the "Great Books" of the AI Society – the durable, foundational knowledge that has been hardened through significant cost structure or consensus building. This represents the society's core, stable understanding, history, and potentially its foundational principles derived from the [[constitution.md]].
 
 **Characteristics:**
