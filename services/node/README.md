@@ -1,4 +1,4 @@
-# Node Executor Service (Monorepo)
+# Node Executor Service 
 
 **Purpose:** This repository contains the implementations for the various types of "nodes" or agents that execute tasks within the AI Society workflows managed by the [[services/workflow/README.md|Workflow Service]].
 
