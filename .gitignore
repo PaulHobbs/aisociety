@@ -1,2 +1,2 @@
-*.rslsc
+*.rsls*
 *.pyc
