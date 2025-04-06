@@ -1,2 +1,5 @@
 *.rsls*
 *.pyc
+.DS_Store
+paul.hobbs.page
+.obsidian

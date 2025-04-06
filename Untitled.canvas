@@ -1,7 +1,0 @@
-{
-	"nodes":[
-		{"id":"aa79de7db7ddafc2","x":-360,"y":-420,"width":700,"height":620,"type":"file","file":"services/workflow/Architecture.md"},
-		{"id":"9977687a56264944","x":-340,"y":-400,"width":740,"height":728,"type":"file","file":"services/node/README.md"}
-	],
-	"edges":[]
-}
