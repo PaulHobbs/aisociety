@@ -36,6 +36,9 @@ message Node {
 
   // Any changes to the nodes (ex. inserting nodes to fulfill tasks).
   repeated NodeEdit edits = 10;
+
+  // Whether the node is complete, and immutable.
+  bool is_final = 11;
 }
 
 message ExecutionOptions {
@@ -109,3 +112,112 @@ message NodeEdit {
   string description = 4; // Description of the edit
   Node node = 6; // New node data (for insert/update)
 }
+
+ 
+// ----------- RPC Service Definitions -----------
+/**
+ * Service for managing workflow graphs and their nodes.
+ * Provides RPCs to create, retrieve, list, and update workflows and nodes.
+ */
+service WorkflowService {
+ // Create a new workflow graph
+ rpc CreateWorkflow(CreateWorkflowRequest) returns (CreateWorkflowResponse);
+
+ // Get a workflow graph by ID
+ rpc GetWorkflow(GetWorkflowRequest) returns (GetWorkflowResponse);
+
+ // List all workflows
+ rpc ListWorkflows(ListWorkflowsRequest) returns (ListWorkflowsResponse);
+
+ // Update an existing workflow graph
+ rpc UpdateWorkflow(UpdateWorkflowRequest) returns (UpdateWorkflowResponse);
+
+ // Get a node by ID
+ rpc GetNode(GetNodeRequest) returns (GetNodeResponse);
+
+ // Update a node (status, task, etc.)
+ rpc UpdateNode(UpdateNodeRequest) returns (UpdateNodeResponse);
+}
+
+/**
+ * Service responsible for executing individual workflow nodes.
+ * Provides RPCs to trigger node execution tasks.
+ */
+service NodeService {
+ // Execute a node's assigned task
+ rpc ExecuteNode(ExecuteNodeRequest) returns (ExecuteNodeResponse);
+}
+
+// ----------- Request and Response Messages -----------
+
+// WorkflowService messages
+message CreateWorkflowRequest {
+ repeated Node nodes = 1;
+ Caller caller = 2;
+}
+
+message CreateWorkflowResponse {
+ string workflow_id = 1;
+}
+
+message GetWorkflowRequest {
+ string workflow_id = 1;
+}
+
+message GetWorkflowResponse {
+ repeated Node nodes = 1;
+}
+
+message ListWorkflowsRequest {}
+
+message ListWorkflowsResponse {
+ repeated string workflow_ids = 1;
+}
+
+message UpdateWorkflowRequest {
+ string workflow_id = 1;
+ repeated Node nodes = 2;
+ Caller caller = 3;
+}
+
+message UpdateWorkflowResponse {
+ bool success = 1;
+}
+
+// NodeService messages
+message GetNodeRequest {
+ string workflow_id = 1;
+ string node_id = 2;
+}
+
+message GetNodeResponse {
+ Node node = 1;
+}
+
+/**
+ * Identifies the caller making a request, including agent identity and worknode context.
+ */
+message Caller {
+  string agent = 1;
+  string worknode_id = 2;
+}
+
+message UpdateNodeRequest {
+ string workflow_id = 1;
+ Node node = 2;
+ Caller caller = 3;
+}
+
+message UpdateNodeResponse {
+ bool success = 1;
+}
+
+message ExecuteNodeRequest {
+ string workflow_id = 1;
+ string node_id = 2;
+}
+
+message ExecuteNodeResponse {
+ NodeStatus status = 1;
+}
+
