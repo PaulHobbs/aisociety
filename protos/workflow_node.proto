@@ -5,6 +5,8 @@ import "google/protobuf/timestamp.proto";
 
 package aisociety.workflow;
 
+option go_package = "paul.hobbs.page/aisociety/proto";
+
 // Represents a single node within a workflow graph
 message Node {
   // Unique identifier for this node within the workflow
