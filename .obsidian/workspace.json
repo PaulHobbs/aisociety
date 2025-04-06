@@ -170,6 +170,7 @@
   },
   "active": "0349b336e26d7d9c",
   "lastOpenFiles": [
+    "rfc/proposed/004-update-foundational-values.md",
     "conversations/003-first-constitutional-convention/2025-04-05_Evaluating-an-AI-Society-Constitution.md",
     "conversations/003-first-constitutional-convention/2025-04-05_Evaluating an AI Society Constitution.md",
     "conversations/003-first-constitutional-convention/summary.md",
@@ -205,7 +206,6 @@
     "mcp-tools/protobuf-api-assistant/README.md",
     "mcp-tools/knowledge-base-curator/README.md",
     "vision.md",
-    "constitution.md",
     "Untitled.canvas"
   ]
 }

@@ -16,8 +16,16 @@ This file tracks the initial implementation plan for the cold start MCP servers.
 ## Knowledge Base Curator MCP
 
 - [ ] Implement document submission, categorization, review, and promotion tools.
-- [ ] Develop semantic and keyword search capabilities.
+- [ ] Develop semantic and keyword search capabilities for constitution, values, and related documents.
 - [ ] Add summarization features for onboarding and quick reference.
+
+---
+
+## RFC Repository MCP
+
+- [ ] Implement RFC file CRUD operations, metadata management, and versioning.
+- [ ] Support linking RFCs to governance workflows.
+- [ ] Provide search and filtering capabilities.
 
 ---
 
@@ -42,3 +50,13 @@ This file tracks the initial implementation plan for the cold start MCP servers.
 - [ ] Develop tools to add, tag, and summarize research papers.
 - [ ] Implement search and citation tracking.
 - [ ] Generate topic-based research reports.
+
+---
+
+## AI Governor Support Tools
+
+- [ ] Leverage the workflow engine for governance coordination, review management, escalation, and decision workflows.
+- [ ] Use immutable workflow output storage for transparent logging and audit trails.
+- [ ] Focus MCP development on:
+  - [ ] Knowledge base search and retrieval.
+  - [ ] RFC repository management.
