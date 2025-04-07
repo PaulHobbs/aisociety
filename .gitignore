@@ -3,5 +3,5 @@
 .DS_Store
 paul.hobbs.page
 .obsidian
-.secrets
+.secrets.json
 bin/
