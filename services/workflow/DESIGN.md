@@ -42,24 +42,45 @@ At the heart of the service are a few key concepts:
 **Service Responsibilities:** The `WorkflowService` (implemented in Go within `services/workflow`) exposes a gRPC API (`WorkflowService` definition in `workflow_node.proto`). Its primary responsibilities include:
 *   Managing the lifecycle of workflows (creation, updates, retrieval).
 *   Orchestrating the execution flow based on the DAG dependencies.
-*   Persisting the state of workflows and nodes.
-*   Interpreting and applying `NodeEdit`s produced by executing nodes.
-*   Communicating with the `NodeService` to dispatch work.
+*   Persisting the state of workflows, nodes, and tasks using a `StateManager` component interacting with PostgreSQL.
+*   Interpreting and applying `NodeEdit`s produced by executing nodes within database transactions.
+*   Communicating with the `NodeService` via a gRPC client to dispatch work.
+*   Providing a gRPC server implementation (`type server struct { pb.UnimplementedWorkflowServiceServer ... }`).
 
 **Decoupled Execution:** A key architectural principle is the separation of concerns between orchestration (`WorkflowService`) and execution (`NodeService`). The `WorkflowService` determines *what* needs to run and *when*, while the `NodeService` handles the specifics of *how* a given node (and its assigned agent/task) is executed. This promotes modularity and allows different execution backends.
 
 **Execution Lifecycle Narrative:**
 1.  **Initiation:** A client (internal service or CLI) requests workflow creation via the gRPC API, providing the initial set of nodes and/or tasks.
-2.  **Persistence:** The `WorkflowService` validates the request and persists the initial workflow structure and node states in the PostgreSQL database (`schema.sql`). Nodes typically start in a `PENDING` status.
-3.  **Scheduling:** The Orchestration Engine component continuously scans active workflows, identifying nodes whose dependencies (parent nodes) have successfully completed (`PASS` status).
+2.  **Persistence:** The `WorkflowService` validates the request and uses the `StateManager` to persist the initial workflow structure (`workflows` table) and node states (`nodes` table, potentially storing the `pb.Node` proto as `BYTEA`) in the PostgreSQL database (defined in `schema.sql`). Nodes typically start in a `PENDING` status.
+3.  **Scheduling Loop:** The Orchestration Engine component runs a continuous loop (e.g., polling the database every few seconds). In each iteration, it queries the `StateManager` for `PENDING` nodes whose parent nodes (tracked via dependencies in the `nodes` table or within the serialized `pb.Node`) have all reached a `PASS` status. On service startup, this loop also handles recovering workflows that were `RUNNING`.
 4.  **Dispatch:** For each ready node, the Engine constructs an `ExecuteNodeRequest` (including the `Node` definition, its `assigned_task`, and potentially context from upstream/downstream nodes) and sends it to the `NodeService` via a gRPC client. The node's status is updated to `RUNNING`.
 5.  **Execution:** The `NodeService` receives the request, identifies the correct agent based on `Node.agent`, prepares the necessary input/prompt (using `Node.assigned_task.goal` and potentially upstream results), invokes the agent, and awaits the result.
-6.  **Result Handling:** The `NodeService` packages the outcome (success/failure status, output, artifacts, any generated `NodeEdit`s) into an `ExecuteNodeResponse` and returns it to the `WorkflowService`.
-7.  **State Update & Edits:** The `WorkflowService` receives the response. It updates the node's `status` (`PASS`, `FAIL`, `TASK_ERROR`, etc.) and persists the results, including detailed event/log data, directly within the `Node` structure in the database (leveraging `BYTEA` columns for Protobuf serialization). If `NodeEdit`s are present, the Orchestration Engine applies them, potentially altering the workflow graph or task definitions for subsequent steps.
-8.  **Progression:** The Engine re-evaluates the workflow graph based on the completed node and any applied edits, potentially identifying new nodes that are now ready for dispatch.
+6.  **Result Handling:** The `NodeService` packages the outcome (the complete updated `pb.Node` including status, results, artifacts, and any generated `pb.NodeEdit`s) into an `ExecuteNodeResponse` and returns it to the `WorkflowService`. If the `NodeService` encounters an internal error *preventing* execution (e.g., cannot contact the agent), it should return a gRPC error. If the *agent* fails, the `NodeService` should update the `Node.status` to `TASK_ERROR` and return the updated node in the response, *not* a gRPC error.
+7.  **State Update & Edits:** The `WorkflowService` receives the response.
+    *   **On Success:** It uses the `StateManager` to update the corresponding `Node` record in the database with the received `pb.Node` data (serialized). If `NodeEdit`s are present in the response's `Node.edits` field, the Orchestration Engine applies these edits *within the same database transaction* used to update the node state. Applying edits involves potentially inserting new nodes, updating existing ones, or changing dependencies based on the `NodeEdit` messages. Clear logging should indicate which edits were applied. Conflicting edits might require a defined resolution strategy (e.g., last write wins, or failing the transaction if atomicity is critical).
+    *   **On gRPC Error from NodeService:** The `WorkflowService` should update the node's status to `INFRA_ERROR` via the `StateManager`, potentially retrying based on `ExecutionOptions`.
+8.  **Progression:** After a node completes (successfully or with `TASK_ERROR`/`INFRA_ERROR`) and its state (and any edits) are persisted, the Engine's next scheduling loop iteration will naturally re-evaluate dependencies and potentially identify new nodes that are ready for dispatch.
 9.  **Completion/Termination:** The workflow completes when all terminal nodes reach a final state or if an unrecoverable error occurs.
 
-**State Management & Observability:** Reliable state persistence is handled by the `StateManager` component interacting with PostgreSQL. We store the Protobuf representation of `Node`s directly. A key goal is high-fidelity observability: detailed execution events, status changes, agent outputs, and errors are captured *within* the persisted `Node` data (e.g., in `Node.assigned_task.results`, `Node.edits`, or potentially dedicated event fields). This provides a rich, structured history associated directly with the execution step.
+**State Management & Observability:** Reliable state persistence is handled by a `StateManager` component (likely a Go interface implemented by a struct interacting with the `database/sql` package and a PostgreSQL driver like `pgx`).
+    ```go
+    // Potential StateManager Interface (Illustrative)
+    type StateManager interface {
+        CreateWorkflow(ctx context.Context, workflow *pb.Workflow) error
+        GetWorkflow(ctx context.Context, workflowID string) (*pb.Workflow, error)
+        UpdateWorkflowStatus(ctx context.Context, workflowID string, status pb.Status) error // Added for overall status
+
+        CreateNode(ctx context.Context, node *pb.Node) error
+        GetNode(ctx context.Context, workflowID, nodeID string) (*pb.Node, error)
+        UpdateNode(ctx context.Context, node *pb.Node) error // Used for status, results, etc.
+        ApplyNodeEdits(ctx context.Context, workflowID string, edits []*pb.NodeEdit) error // Needs transactional logic
+
+        // Query for nodes ready to run (implementation detail)
+        FindReadyNodes(ctx context.Context) ([]*pb.Node, error)
+        // ... other necessary methods
+    }
+    ```
+    This interface abstracts the database operations. The implementation will handle serializing `pb.Node` (and potentially `pb.Workflow`, `pb.Task`) into `BYTEA` columns using `proto.Marshal` and deserializing using `proto.Unmarshal`. High-fidelity observability is achieved by storing rich data within the serialized `Node` Protobuf message itself (e.g., in `Node.assigned_task.results`, `Node.edits`, status history).
 
 ## 4. Advanced Workflow Patterns with `Node.Edits`
 
@@ -81,10 +102,12 @@ These examples show how `Node.Edits` allow nodes to actively shape the workflow 
 ## 6. Design Considerations
 
 *   **Communication:** gRPC is chosen for efficient, strongly-typed communication between services.
-*   **Persistence:** PostgreSQL provides robust relational storage, while storing Protobuf messages in `BYTEA` columns offers flexibility for evolving the `Node` structure.
-*   **Extensibility:** The architecture is designed to accommodate diverse agent types by interacting via the standardized `NodeService` interface.
-*   **Error Handling:** The system needs robust handling for various failure modes (agent errors (`TASK_ERROR`), infrastructure issues (`INFRA_ERROR`), timeouts). `ExecutionOptions` provide basic retry capabilities.
-*   **Reliability/Scalability:** For the initial clients (internal services, CLI), standard reliability and latency are acceptable. Future needs might require enhancements.
+*   **Persistence:** PostgreSQL provides robust relational storage. Storing core data like `workflow_id`, `node_id`, `status`, and dependency links in standard columns allows for efficient querying by the Orchestration Engine. Storing the full `pb.Node` Protobuf message in a `BYTEA` column offers flexibility for evolving the `Node` structure without immediate schema migrations. Database operations should be performed within transactions where atomicity is required (e.g., updating a node and applying its edits).
+*   **Extensibility:** The architecture accommodates diverse agent types via the standardized `NodeService` gRPC interface.
+*   **Error Handling:** Clear distinction between agent/task errors (`TASK_ERROR`, handled by updating node status) and infrastructure/communication errors (`INFRA_ERROR`, potentially leading to retries or workflow failure). The `WorkflowService` is responsible for interpreting results/errors from `NodeService` and updating state accordingly via the `StateManager`.
+*   **Configuration:** Service configuration (database connection string, NodeService address, polling intervals, etc.) should be managed externally (e.g., environment variables, configuration files loaded at startup).
+*   **Concurrency:** The Orchestration Engine might dispatch multiple nodes concurrently. Database transactions and potentially optimistic/pessimistic locking strategies (if needed, though careful state management might suffice initially) should be used to prevent race conditions when updating workflow/node states.
+*   **Reliability/Scalability:** For initial use cases, a single instance polling the database is likely sufficient. Future scaling could involve more sophisticated queue-based dispatching or sharding.
 
 ## 7. Future Considerations
 

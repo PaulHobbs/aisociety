@@ -4,7 +4,7 @@
     *   [x] Define generic task execution interface.
     *   [x] Implement Protobuf communication layer (client side for talking to nodes).
 *   [x] High-level design for workflow service
-*   [ ] Low-level design for workflow service state machine & storage, & interface with node service
+*   [x] Low-level design for workflow service state machine & storage, & interface with node service
 *   [ ] Implement workflow state persistence mechanism.
 *   [ ] Develop initial scheduler logic (simple capability matching).
 *   [ ] Build basic API for defining and launching workflows.
