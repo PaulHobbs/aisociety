@@ -30,3 +30,23 @@ test-pure: check-server
 
 test-e2e: check-server
 	go test -v ./services/node -run '^TestE2E_'
+
+.PHONY: start-test-db test-workflow-storage
+
+start-test-db:
+	docker-compose up -d postgres-test && sleep 5
+
+test-workflow-storage: start-test-db
+	TEST_DATABASE_URL=postgres://aisociety:aisociety@localhost:5433/aisociety_test_db?sslmode=disable go test -v ./services/workflow/persistence/...
+
+.PHONY: test-persistence-schema
+.PHONY: init-test-db-logs
+
+init-test-db-logs:
+	docker-compose down -v
+	docker-compose up -d postgres-test
+	sleep 5
+	docker logs aisociety_postgres_test
+
+test-persistence-schema: start-test-db
+	TEST_DATABASE_URL=postgres://aisociety:aisociety@localhost:5433/aisociety_test_db?sslmode=disable go test -v ./services/workflow/persistence/schema_test.go

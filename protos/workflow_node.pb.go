@@ -1336,6 +1336,94 @@ func (x *ExecuteNodeResponse) GetNode() *Node {
 	return nil
 }
 
+type TaskList struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Tasks         []*Task                `protobuf:"bytes,1,rep,name=tasks,proto3" json:"tasks,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TaskList) Reset() {
+	*x = TaskList{}
+	mi := &file_protos_workflow_node_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TaskList) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TaskList) ProtoMessage() {}
+
+func (x *TaskList) ProtoReflect() protoreflect.Message {
+	mi := &file_protos_workflow_node_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TaskList.ProtoReflect.Descriptor instead.
+func (*TaskList) Descriptor() ([]byte, []int) {
+	return file_protos_workflow_node_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *TaskList) GetTasks() []*Task {
+	if x != nil {
+		return x.Tasks
+	}
+	return nil
+}
+
+type NodeEditList struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Edits         []*NodeEdit            `protobuf:"bytes,1,rep,name=edits,proto3" json:"edits,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *NodeEditList) Reset() {
+	*x = NodeEditList{}
+	mi := &file_protos_workflow_node_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *NodeEditList) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NodeEditList) ProtoMessage() {}
+
+func (x *NodeEditList) ProtoReflect() protoreflect.Message {
+	mi := &file_protos_workflow_node_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NodeEditList.ProtoReflect.Descriptor instead.
+func (*NodeEditList) Descriptor() ([]byte, []int) {
+	return file_protos_workflow_node_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *NodeEditList) GetEdits() []*NodeEdit {
+	if x != nil {
+		return x.Edits
+	}
+	return nil
+}
+
 type ExecutionOptions_RetryOptions struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	MaxAttempts   int32                  `protobuf:"varint,1,opt,name=max_attempts,json=maxAttempts,proto3" json:"max_attempts,omitempty"`
@@ -1346,7 +1434,7 @@ type ExecutionOptions_RetryOptions struct {
 
 func (x *ExecutionOptions_RetryOptions) Reset() {
 	*x = ExecutionOptions_RetryOptions{}
-	mi := &file_protos_workflow_node_proto_msgTypes[21]
+	mi := &file_protos_workflow_node_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1358,7 +1446,7 @@ func (x *ExecutionOptions_RetryOptions) String() string {
 func (*ExecutionOptions_RetryOptions) ProtoMessage() {}
 
 func (x *ExecutionOptions_RetryOptions) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_workflow_node_proto_msgTypes[21]
+	mi := &file_protos_workflow_node_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1400,7 +1488,7 @@ type Task_Result struct {
 
 func (x *Task_Result) Reset() {
 	*x = Task_Result{}
-	mi := &file_protos_workflow_node_proto_msgTypes[22]
+	mi := &file_protos_workflow_node_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1412,7 +1500,7 @@ func (x *Task_Result) String() string {
 func (*Task_Result) ProtoMessage() {}
 
 func (x *Task_Result) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_workflow_node_proto_msgTypes[22]
+	mi := &file_protos_workflow_node_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1467,7 +1555,7 @@ type NodeStatus_Update struct {
 
 func (x *NodeStatus_Update) Reset() {
 	*x = NodeStatus_Update{}
-	mi := &file_protos_workflow_node_proto_msgTypes[24]
+	mi := &file_protos_workflow_node_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1479,7 +1567,7 @@ func (x *NodeStatus_Update) String() string {
 func (*NodeStatus_Update) ProtoMessage() {}
 
 func (x *NodeStatus_Update) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_workflow_node_proto_msgTypes[24]
+	mi := &file_protos_workflow_node_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1630,7 +1718,11 @@ const file_protos_workflow_node_proto_rawDesc = "" +
 	"\x0eupstream_nodes\x18\x04 \x03(\v2\x18.aisociety.workflow.NodeR\rupstreamNodes\x12C\n" +
 	"\x10downstream_nodes\x18\x05 \x03(\v2\x18.aisociety.workflow.NodeR\x0fdownstreamNodes\"C\n" +
 	"\x13ExecuteNodeResponse\x12,\n" +
-	"\x04node\x18\x01 \x01(\v2\x18.aisociety.workflow.NodeR\x04node*|\n" +
+	"\x04node\x18\x01 \x01(\v2\x18.aisociety.workflow.NodeR\x04node\":\n" +
+	"\bTaskList\x12.\n" +
+	"\x05tasks\x18\x01 \x03(\v2\x18.aisociety.workflow.TaskR\x05tasks\"B\n" +
+	"\fNodeEditList\x122\n" +
+	"\x05edits\x18\x01 \x03(\v2\x1c.aisociety.workflow.NodeEditR\x05edits*|\n" +
 	"\x06Status\x12\n" +
 	"\n" +
 	"\x06UNKOWN\x10\x00\x12\b\n" +
@@ -1667,7 +1759,7 @@ func file_protos_workflow_node_proto_rawDescGZIP() []byte {
 }
 
 var file_protos_workflow_node_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_protos_workflow_node_proto_msgTypes = make([]protoimpl.MessageInfo, 25)
+var file_protos_workflow_node_proto_msgTypes = make([]protoimpl.MessageInfo, 27)
 var file_protos_workflow_node_proto_goTypes = []any{
 	(Status)(0),                           // 0: aisociety.workflow.Status
 	(NodeEdit_Type)(0),                    // 1: aisociety.workflow.NodeEdit.Type
@@ -1692,12 +1784,14 @@ var file_protos_workflow_node_proto_goTypes = []any{
 	(*UpdateNodeResponse)(nil),            // 20: aisociety.workflow.UpdateNodeResponse
 	(*ExecuteNodeRequest)(nil),            // 21: aisociety.workflow.ExecuteNodeRequest
 	(*ExecuteNodeResponse)(nil),           // 22: aisociety.workflow.ExecuteNodeResponse
-	(*ExecutionOptions_RetryOptions)(nil), // 23: aisociety.workflow.ExecutionOptions.RetryOptions
-	(*Task_Result)(nil),                   // 24: aisociety.workflow.Task.Result
-	nil,                                   // 25: aisociety.workflow.Task.Result.ArtifactsEntry
-	(*NodeStatus_Update)(nil),             // 26: aisociety.workflow.NodeStatus.Update
-	(*durationpb.Duration)(nil),           // 27: google.protobuf.Duration
-	(*timestamppb.Timestamp)(nil),         // 28: google.protobuf.Timestamp
+	(*TaskList)(nil),                      // 23: aisociety.workflow.TaskList
+	(*NodeEditList)(nil),                  // 24: aisociety.workflow.NodeEditList
+	(*ExecutionOptions_RetryOptions)(nil), // 25: aisociety.workflow.ExecutionOptions.RetryOptions
+	(*Task_Result)(nil),                   // 26: aisociety.workflow.Task.Result
+	nil,                                   // 27: aisociety.workflow.Task.Result.ArtifactsEntry
+	(*NodeStatus_Update)(nil),             // 28: aisociety.workflow.NodeStatus.Update
+	(*durationpb.Duration)(nil),           // 29: google.protobuf.Duration
+	(*timestamppb.Timestamp)(nil),         // 30: google.protobuf.Timestamp
 }
 var file_protos_workflow_node_proto_depIdxs = []int32{
 	4,  // 0: aisociety.workflow.Node.agent:type_name -> aisociety.workflow.Agent
@@ -1706,13 +1800,13 @@ var file_protos_workflow_node_proto_depIdxs = []int32{
 	5,  // 3: aisociety.workflow.Node.assigned_task:type_name -> aisociety.workflow.Task
 	0,  // 4: aisociety.workflow.Node.status:type_name -> aisociety.workflow.Status
 	7,  // 5: aisociety.workflow.Node.edits:type_name -> aisociety.workflow.NodeEdit
-	27, // 6: aisociety.workflow.ExecutionOptions.timeout:type_name -> google.protobuf.Duration
-	23, // 7: aisociety.workflow.ExecutionOptions.retry_options:type_name -> aisociety.workflow.ExecutionOptions.RetryOptions
-	24, // 8: aisociety.workflow.Task.results:type_name -> aisociety.workflow.Task.Result
+	29, // 6: aisociety.workflow.ExecutionOptions.timeout:type_name -> google.protobuf.Duration
+	25, // 7: aisociety.workflow.ExecutionOptions.retry_options:type_name -> aisociety.workflow.ExecutionOptions.RetryOptions
+	26, // 8: aisociety.workflow.Task.results:type_name -> aisociety.workflow.Task.Result
 	5,  // 9: aisociety.workflow.Task.subtasks:type_name -> aisociety.workflow.Task
-	26, // 10: aisociety.workflow.NodeStatus.progress:type_name -> aisociety.workflow.NodeStatus.Update
+	28, // 10: aisociety.workflow.NodeStatus.progress:type_name -> aisociety.workflow.NodeStatus.Update
 	1,  // 11: aisociety.workflow.NodeEdit.type:type_name -> aisociety.workflow.NodeEdit.Type
-	28, // 12: aisociety.workflow.NodeEdit.timestamp:type_name -> google.protobuf.Timestamp
+	30, // 12: aisociety.workflow.NodeEdit.timestamp:type_name -> google.protobuf.Timestamp
 	2,  // 13: aisociety.workflow.NodeEdit.node:type_name -> aisociety.workflow.Node
 	2,  // 14: aisociety.workflow.CreateWorkflowRequest.nodes:type_name -> aisociety.workflow.Node
 	18, // 15: aisociety.workflow.CreateWorkflowRequest.caller:type_name -> aisociety.workflow.Caller
@@ -1726,30 +1820,32 @@ var file_protos_workflow_node_proto_depIdxs = []int32{
 	2,  // 23: aisociety.workflow.ExecuteNodeRequest.upstream_nodes:type_name -> aisociety.workflow.Node
 	2,  // 24: aisociety.workflow.ExecuteNodeRequest.downstream_nodes:type_name -> aisociety.workflow.Node
 	2,  // 25: aisociety.workflow.ExecuteNodeResponse.node:type_name -> aisociety.workflow.Node
-	27, // 26: aisociety.workflow.ExecutionOptions.RetryOptions.retry_delay:type_name -> google.protobuf.Duration
-	0,  // 27: aisociety.workflow.Task.Result.status:type_name -> aisociety.workflow.Status
-	25, // 28: aisociety.workflow.Task.Result.artifacts:type_name -> aisociety.workflow.Task.Result.ArtifactsEntry
-	0,  // 29: aisociety.workflow.NodeStatus.Update.status:type_name -> aisociety.workflow.Status
-	28, // 30: aisociety.workflow.NodeStatus.Update.updated_millis:type_name -> google.protobuf.Timestamp
-	8,  // 31: aisociety.workflow.WorkflowService.CreateWorkflow:input_type -> aisociety.workflow.CreateWorkflowRequest
-	10, // 32: aisociety.workflow.WorkflowService.GetWorkflow:input_type -> aisociety.workflow.GetWorkflowRequest
-	12, // 33: aisociety.workflow.WorkflowService.ListWorkflows:input_type -> aisociety.workflow.ListWorkflowsRequest
-	14, // 34: aisociety.workflow.WorkflowService.UpdateWorkflow:input_type -> aisociety.workflow.UpdateWorkflowRequest
-	16, // 35: aisociety.workflow.WorkflowService.GetNode:input_type -> aisociety.workflow.GetNodeRequest
-	19, // 36: aisociety.workflow.WorkflowService.UpdateNode:input_type -> aisociety.workflow.UpdateNodeRequest
-	21, // 37: aisociety.workflow.NodeService.ExecuteNode:input_type -> aisociety.workflow.ExecuteNodeRequest
-	9,  // 38: aisociety.workflow.WorkflowService.CreateWorkflow:output_type -> aisociety.workflow.CreateWorkflowResponse
-	11, // 39: aisociety.workflow.WorkflowService.GetWorkflow:output_type -> aisociety.workflow.GetWorkflowResponse
-	13, // 40: aisociety.workflow.WorkflowService.ListWorkflows:output_type -> aisociety.workflow.ListWorkflowsResponse
-	15, // 41: aisociety.workflow.WorkflowService.UpdateWorkflow:output_type -> aisociety.workflow.UpdateWorkflowResponse
-	17, // 42: aisociety.workflow.WorkflowService.GetNode:output_type -> aisociety.workflow.GetNodeResponse
-	20, // 43: aisociety.workflow.WorkflowService.UpdateNode:output_type -> aisociety.workflow.UpdateNodeResponse
-	22, // 44: aisociety.workflow.NodeService.ExecuteNode:output_type -> aisociety.workflow.ExecuteNodeResponse
-	38, // [38:45] is the sub-list for method output_type
-	31, // [31:38] is the sub-list for method input_type
-	31, // [31:31] is the sub-list for extension type_name
-	31, // [31:31] is the sub-list for extension extendee
-	0,  // [0:31] is the sub-list for field type_name
+	5,  // 26: aisociety.workflow.TaskList.tasks:type_name -> aisociety.workflow.Task
+	7,  // 27: aisociety.workflow.NodeEditList.edits:type_name -> aisociety.workflow.NodeEdit
+	29, // 28: aisociety.workflow.ExecutionOptions.RetryOptions.retry_delay:type_name -> google.protobuf.Duration
+	0,  // 29: aisociety.workflow.Task.Result.status:type_name -> aisociety.workflow.Status
+	27, // 30: aisociety.workflow.Task.Result.artifacts:type_name -> aisociety.workflow.Task.Result.ArtifactsEntry
+	0,  // 31: aisociety.workflow.NodeStatus.Update.status:type_name -> aisociety.workflow.Status
+	30, // 32: aisociety.workflow.NodeStatus.Update.updated_millis:type_name -> google.protobuf.Timestamp
+	8,  // 33: aisociety.workflow.WorkflowService.CreateWorkflow:input_type -> aisociety.workflow.CreateWorkflowRequest
+	10, // 34: aisociety.workflow.WorkflowService.GetWorkflow:input_type -> aisociety.workflow.GetWorkflowRequest
+	12, // 35: aisociety.workflow.WorkflowService.ListWorkflows:input_type -> aisociety.workflow.ListWorkflowsRequest
+	14, // 36: aisociety.workflow.WorkflowService.UpdateWorkflow:input_type -> aisociety.workflow.UpdateWorkflowRequest
+	16, // 37: aisociety.workflow.WorkflowService.GetNode:input_type -> aisociety.workflow.GetNodeRequest
+	19, // 38: aisociety.workflow.WorkflowService.UpdateNode:input_type -> aisociety.workflow.UpdateNodeRequest
+	21, // 39: aisociety.workflow.NodeService.ExecuteNode:input_type -> aisociety.workflow.ExecuteNodeRequest
+	9,  // 40: aisociety.workflow.WorkflowService.CreateWorkflow:output_type -> aisociety.workflow.CreateWorkflowResponse
+	11, // 41: aisociety.workflow.WorkflowService.GetWorkflow:output_type -> aisociety.workflow.GetWorkflowResponse
+	13, // 42: aisociety.workflow.WorkflowService.ListWorkflows:output_type -> aisociety.workflow.ListWorkflowsResponse
+	15, // 43: aisociety.workflow.WorkflowService.UpdateWorkflow:output_type -> aisociety.workflow.UpdateWorkflowResponse
+	17, // 44: aisociety.workflow.WorkflowService.GetNode:output_type -> aisociety.workflow.GetNodeResponse
+	20, // 45: aisociety.workflow.WorkflowService.UpdateNode:output_type -> aisociety.workflow.UpdateNodeResponse
+	22, // 46: aisociety.workflow.NodeService.ExecuteNode:output_type -> aisociety.workflow.ExecuteNodeResponse
+	40, // [40:47] is the sub-list for method output_type
+	33, // [33:40] is the sub-list for method input_type
+	33, // [33:33] is the sub-list for extension type_name
+	33, // [33:33] is the sub-list for extension extendee
+	0,  // [0:33] is the sub-list for field type_name
 }
 
 func init() { file_protos_workflow_node_proto_init() }
@@ -1757,14 +1853,14 @@ func file_protos_workflow_node_proto_init() {
 	if File_protos_workflow_node_proto != nil {
 		return
 	}
-	file_protos_workflow_node_proto_msgTypes[24].OneofWrappers = []any{}
+	file_protos_workflow_node_proto_msgTypes[26].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_protos_workflow_node_proto_rawDesc), len(file_protos_workflow_node_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   25,
+			NumMessages:   27,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: aisociety_postgres
+    environment:
+      POSTGRES_USER: aisociety
+      POSTGRES_PASSWORD: aisociety
+      POSTGRES_DB: aisociety_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./services/workflow/schema/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+
+  node-service:
+    build:
+      context: .
+      dockerfile: services/node/Dockerfile
+    container_name: node_service
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: postgres://aisociety:aisociety@postgres:5432/aisociety_db?sslmode=disable
+    ports:
+      - "50051:50051"
+
+  workflow-service:
+    build:
+      context: .
+      dockerfile: services/workflow/Dockerfile
+    container_name: workflow_service
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: postgres://aisociety:aisociety@postgres:5432/aisociety_db?sslmode=disable
+    ports:
+      - "50052:50052"
+
+  postgres-test:
+    image: postgres:15
+    container_name: aisociety_postgres_test
+    environment:
+      POSTGRES_USER: aisociety
+      POSTGRES_PASSWORD: aisociety
+      POSTGRES_DB: aisociety_test_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+      - ./services/workflow/schema/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+
+volumes:
+  postgres_data:
+  postgres_test_data:

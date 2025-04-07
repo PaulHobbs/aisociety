@@ -230,4 +230,11 @@ message ExecuteNodeRequest {
 message ExecuteNodeResponse {
  Node node = 1;
 }
+message TaskList {
+  repeated Task tasks = 1;
+}
+
+message NodeEditList {
+  repeated NodeEdit edits = 1;
+}
 
