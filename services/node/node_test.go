@@ -48,7 +48,7 @@ func TestExecuteNode_FakeAgent(t *testing.T) {
 				Id:   "task-fake-1",
 				Goal: taskGoal,
 			},
-			Status: pb.Status_UNKOWN, // Initial status
+			Status: pb.Status_UNKNOWN, // Initial status
 		},
 		// Add upstream/downstream nodes if needed for context testing
 		// UpstreamNodes: []*pb.Node{...},

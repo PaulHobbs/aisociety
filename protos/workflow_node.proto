@@ -8,7 +8,7 @@ package aisociety.workflow;
 option go_package = "paul.hobbs.page/aisociety/protos";
 
 enum Status {
-  UNKOWN = 0;
+  UNKNOWN = 0;
   PASS = 1;
   FAIL = 2;
   SKIPPED = 3;  // This task was not performed
@@ -17,6 +17,8 @@ enum Status {
   INFRA_ERROR = 6;  // The agent framework encountered and error
   TIMEOUT = 7;   // subcategory of infra error
   CRASH = 8;  // subcategory of infra error
+  BLOCKED = 9;  // Waiting for dependencies
+  RUNNING = 10;  // Dispatched to Node Service
 }
 
 // Represents a single node within a workflow graph

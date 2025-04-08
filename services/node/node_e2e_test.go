@@ -46,7 +46,7 @@ func TestE2E_ExecuteNode_RealAgent(t *testing.T) {
 				Id:   "task-real-1",
 				Goal: taskGoal,
 			},
-			Status: pb.Status_UNKOWN,
+			Status: pb.Status_UNKNOWN,
 		},
 	}
 

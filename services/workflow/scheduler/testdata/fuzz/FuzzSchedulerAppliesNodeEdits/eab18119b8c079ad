@@ -1,0 +1,5 @@
+go test fuzz v1
+string("initial d3õ\xf0\xedF\xba\x10\xb2escription")
+int32(-125)
+string("ddit descrip|ion")
+rune('\x01')
