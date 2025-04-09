@@ -292,23 +292,40 @@ func NewPostgresStateManagerFromConnStr(ctx context.Context, connStr string) (*P
 }
 
 // Close closes the underlying pgx pool
-func (p *PostgresStateManager) Close() {
+func (p *PostgresStateManager) Close() error {
 	if p.pool != nil {
 		p.pool.Close()
 	}
+	return nil
 }
-func (p *PostgresStateManager) CreateWorkflow(ctx context.Context, workflow interface{}) error {
-	wf, ok := workflow.(*Workflow)
-	if !ok {
-		return fmt.Errorf("expected *Workflow, got %T", workflow)
-	}
 
+func (p *PostgresStateManager) ListWorkflows(ctx context.Context) ([]string, error) {
+	rows, err := p.pool.Query(ctx, "SELECT id FROM workflows")
+	if err != nil {
+		return nil, fmt.Errorf("ListWorkflows query failed: %w", err)
+	}
+	defer rows.Close()
+
+	var ids []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, fmt.Errorf("ListWorkflows scan failed: %w", err)
+		}
+		ids = append(ids, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("ListWorkflows rows error: %w", err)
+	}
+	return ids, nil
+}
+func (p *PostgresStateManager) CreateWorkflow(ctx context.Context, wf *Workflow) (string, error) {
 	query := `INSERT INTO workflows (name, description, status) VALUES ($1, $2, $3) RETURNING id`
 	err := p.pool.QueryRow(ctx, query, wf.Name, wf.Description, int32(wf.Status)).Scan(&wf.ID)
 	if err != nil {
-		return fmt.Errorf("CreateWorkflow insert failed: %w", err)
+		return "", fmt.Errorf("CreateWorkflow insert failed: %w", err)
 	}
-	return nil
+	return wf.ID, nil
 }
 
 func (p *PostgresStateManager) GetWorkflow(ctx context.Context, workflowID string) (*Workflow, error) {
@@ -317,9 +334,9 @@ func (p *PostgresStateManager) GetWorkflow(ctx context.Context, workflowID strin
 	var statusCode int32
 	err := p.pool.QueryRow(ctx, query, workflowID).Scan(&wf.ID, &wf.Name, &wf.Description, &statusCode)
 	if err != nil {
-		// Return (nil, nil) if no workflow found
+		// Return ErrWorkflowNotFound if no workflow found
 		if err.Error() == "no rows in result set" {
-			return nil, nil
+			return nil, ErrWorkflowNotFound
 		}
 		return nil, fmt.Errorf("GetWorkflow query failed: %w", err)
 	}
@@ -358,4 +375,37 @@ func (p *PostgresStateManager) GetNode(ctx context.Context, workflowID, nodeID s
 		return nil, fmt.Errorf("failed to unmarshal node proto: %w", err)
 	}
 	return &node, nil
+}
+func (p *PostgresStateManager) UpdateNode(ctx context.Context, workflowID string, node *pb.Node) error {
+	// Wrap node in a temporary NodeEdit to reuse serialization and update logic
+	edit := &pb.NodeEdit{
+		Node: node,
+	}
+
+	tx, err := p.pool.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	nodeBytes, allTasksBytes, editsBytes, err := serializeNodeData(edit)
+	if err != nil {
+		return fmt.Errorf("failed to serialize node data: %w", err)
+	}
+
+	if err := updateNodeRecord(ctx, tx, workflowID, edit, nodeBytes, allTasksBytes, editsBytes); err != nil {
+		return fmt.Errorf("failed to update node record: %w", err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return nil
+}
+
+// FindReadyNodes is a stub implementation to satisfy scheduler.StateManager.
+// TODO: Implement actual query logic to find ready nodes.
+func (p *PostgresStateManager) FindReadyNodes(ctx context.Context) ([]*pb.Node, error) {
+	return []*pb.Node{}, nil
 }

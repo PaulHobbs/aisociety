@@ -1,6 +1,6 @@
-PROTO_SRC=protos/workflow_node.proto
+# Use 'docker-compose up' or 'make start-e2e-services' to run services in containers.
 
-.PHONY: run-node-server
+PROTO_SRC=protos/workflow_node.proto
 
 all: proto build
 
@@ -16,20 +16,19 @@ GO_SOURCES := $(shell go list -f '{{$$dir := .Dir}}{{range .GoFiles}}{{$$dir}}/{
 bin/node_server: proto $(GO_SOURCES)
 	go build -o bin/node_server services/node/cmd/server.go
 
-build: bin/node_server
+build: bin/node_server bin/workflow_server bin/scheduler_runner
 	go build ./...
 
-run-node-server: build
-	@python -c "import json, os, subprocess; \
-f = open('.secrets.json'); key = json.load(f).get('OPENROUTER_API_KEY', ''); f.close(); \
-env = os.environ.copy(); env['OPENROUTER_API_KEY'] = key; \
-subprocess.Popen(['bin/node_server'], env=env)"
+bin/scheduler_runner:
+	go build -o bin/scheduler_runner services/workflow/cmd_scheduler/main.go
+
+
 
 .PHONY: test-pure test-e2e check-server
 
 check-server:
 	@python -c "import socket, sys; s=socket.socket(); s.settimeout(1); \
-err = s.connect_ex(('localhost', 50051)); s.close(); sys.exit(0 if err==0 else 1)" || (echo "Server not running, starting server..." && make run-node-server)
+err = s.connect_ex(('localhost', 50051)); s.close(); sys.exit(0 if err==0 else 1)" || (echo "Server not running, starting server..." && make start-node-server)
 
 test-pure: check-server
 	go test -v ./services/node -short | grep -v TestE2E | grep -v "short mode"
@@ -74,4 +73,38 @@ test-scheduler:
 	go test -v ./services/workflow/scheduler
 
 fuzz-scheduler:
+.PHONY: start-workflow-service start-scheduler start-e2e-services stop-e2e-services rm-e2e-services test-e2e-workflow start-node-server
+
+start-node-server: build
+	@python -c "import json, os, subprocess; \
+f = open('.secrets.json'); key = json.load(f).get('OPENROUTER_API_KEY', ''); f.close(); \
+env = os.environ.copy(); env['OPENROUTER_API_KEY'] = key; \
+subprocess.Popen(['bin/node_server'], env=env)"
+
+# start-workflow-service target removed; use Docker Compose instead
+
+# Removed start-scheduler target; scheduler now managed via Docker Compose
+
+start-e2e-services: start-test-db
+	docker-compose -f docker-compose.yml -f docker-compose.test.yml up -d postgres-test
+	docker-compose -f docker-compose.yml -f docker-compose.test.yml up -d node-service workflow-service scheduler
+
+stop-e2e-services:
+	docker-compose -f docker-compose.yml -f docker-compose.test.yml stop node-service workflow-service scheduler postgres-test
+rm-e2e-services:
+	docker-compose -f docker-compose.yml -f docker-compose.test.yml rm -f node-service workflow-service scheduler postgres-test
+
+cleanup-e2e-services:
+	@echo "Cleaning up existing containers..."
+	docker-compose -f docker-compose.yml -f docker-compose.test.yml stop node-service workflow-service scheduler postgres-test
+	docker-compose -f docker-compose.yml -f docker-compose.test.yml rm -f node-service workflow-service scheduler postgres-test
+
+test-e2e-workflow: cleanup-e2e-services start-e2e-services
+	go test -v ./services/workflow/api -run ^TestWorkflowLifecycle_E2E$
+	$(MAKE) stop-e2e-services
+	go test -fuzz=Fuzz --fuzztime=2s -v ./services/workflow/scheduler
+
+.PHONY: test-e2e-no-start
+test-e2e-no-start:
+	go test -v ./services/workflow/api -run ^TestWorkflowLifecycle_E2E$
 	go test -fuzz=Fuzz --fuzztime=2s -v ./services/workflow/scheduler

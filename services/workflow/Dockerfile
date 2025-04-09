@@ -8,9 +8,9 @@ RUN go mod download
 
 COPY protos/ ./protos/
 
-COPY services/workflow/. ./services/workflow/
+COPY services/. ./services/
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o /workflow-service ./services/workflow/cmd/server.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o /workflow-service ./services/workflow/cmd_workflowserver/main.go
 
 # Runtime stage
 FROM scratch

@@ -1,0 +1,2 @@
+- Testing: When adding implementation, always add unit & fuzz tests, and functional or e2e tests as appropriate.
+- Makefile: Check for existing test rules, and add additional rules if adding a new file.

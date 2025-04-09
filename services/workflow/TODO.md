@@ -5,8 +5,8 @@
     *   [x] Implement Protobuf communication layer (client side for talking to nodes).
 *   [x] High-level design for workflow service
 *   [x] Low-level design for workflow service state machine & storage, & interface with node service
-*   [ ] Implement workflow state persistence mechanism.
-*   [ ] Develop initial scheduler logic (simple capability matching).
+*   [x] Implement workflow state persistence mechanism.
+*   [x] Develop initial scheduler logic (simple capability matching).
 *   [ ] Build basic API for defining and launching workflows.
 *   [ ] Implement event emission for key state changes.
 *   [ ] Set up basic monitoring dashboard/interface.
@@ -16,22 +16,22 @@
 ### Detailed Implementation Plan (Milestone Commits)
 
 #### 1. Persistence Layer
-- [ ] Define Go structs/interfaces for `StateManager` abstraction.
-- [ ] Implement PostgreSQL connection setup and configuration.
-- [ ] Implement `CreateWorkflow` method: persist initial workflow and nodes.
-- [ ] Implement `GetWorkflow` method: retrieve and deserialize workflow.
+- [x] Define Go structs/interfaces for `StateManager` abstraction.
+- [x] Implement PostgreSQL connection setup and configuration.
+- [x] Implement `CreateWorkflow` method: persist initial workflow and nodes.
+- [x] Implement `GetWorkflow` method: retrieve and deserialize workflow.
 - [ ] Implement `UpdateWorkflowStatus` method.
-- [ ] Implement `CreateNode` and `UpdateNode` methods with protobuf serialization.
-- [ ] Implement transactional `ApplyNodeEdits` method.
+- [x] Implement `CreateNode` and `UpdateNode` methods with protobuf serialization.
+- [x] Implement transactional `ApplyNodeEdits` method.
 - [ ] Write unit tests for `StateManager` methods.
 
 #### 2. Scheduler & Orchestration Engine
-- [ ] Implement polling loop to scan active workflows.
-- [ ] Implement query to find ready nodes (all parents `PASS`, status `PENDING`).
-- [ ] Implement simple capability matching logic.
-- [ ] Implement dispatch queue respecting DAG dependencies.
-- [ ] Update node status to `RUNNING` upon dispatch.
-- [ ] Write tests for scheduling logic.
+- [x] Implement polling loop to scan active workflows.
+- [x] Implement query to find ready nodes (all parents `PASS`, status `PENDING`).
+- [x] Implement simple capability matching logic.
+- [x] Implement dispatch queue respecting DAG dependencies.
+- [x] Update node status to `RUNNING` upon dispatch.
+- [x] Write tests for scheduling logic.
 
 #### 3. API Layer (gRPC `WorkflowService`)
 - [ ] Implement `CreateWorkflow` RPC handler.

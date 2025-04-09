@@ -37,6 +37,16 @@ services:
       DATABASE_URL: postgres://aisociety:aisociety@postgres:5432/aisociety_db?sslmode=disable
     ports:
       - "50052:50052"
+  scheduler:
+    build:
+      context: .
+      dockerfile: services/workflow/Dockerfile
+    container_name: scheduler
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: postgres://aisociety:aisociety@postgres:5432/aisociety_db?sslmode=disable
+
 
   postgres-test:
     image: postgres:15

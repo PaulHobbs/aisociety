@@ -1,0 +1,5 @@
+panic: failed to listen: listen tcp :50052: bind: address already in use
+
+goroutine 1 [running]:
+main.main()
+	/Users/triciahobbs/code/aisociety/services/workflow/cmd/server.go:14 +0x148

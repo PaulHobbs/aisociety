@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	serverAddr  = "localhost:50051" // Adjust if your server runs on a different port
+	serverAddr  = "localhost:50055" // Adjust if your server runs on a different port
 	fakeAgentID = "fake-agent"      // Must match the constant in nodeservice.go
 )
 

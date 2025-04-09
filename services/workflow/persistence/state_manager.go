@@ -2,15 +2,18 @@ package persistence
 
 import (
 	"context"
+	"errors"
 
 	pb "paul.hobbs.page/aisociety/protos"
 )
+
+var ErrWorkflowNotFound = errors.New("workflow not found")
 
 // StateManager defines the interface for workflow state persistence operations.
 // It abstracts the database operations for storing and retrieving workflow data.
 type StateManager interface {
 	// Workflow operations
-	CreateWorkflow(ctx context.Context, workflow *Workflow) error
+	CreateWorkflow(ctx context.Context, workflow *Workflow) (string, error)
 	GetWorkflow(ctx context.Context, workflowID string) (*Workflow, error)
 	UpdateWorkflowStatus(ctx context.Context, workflowID string, status pb.Status) error
 	ListWorkflows(ctx context.Context) ([]string, error)

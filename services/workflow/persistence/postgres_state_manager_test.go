@@ -105,6 +105,23 @@ func TestCreateAndGetNode(t *testing.T) {
 	if !proto.Equal(gotNode, node) {
 		t.Errorf("Got node %+v, want %+v", gotNode, node)
 	}
+	// --- Test UpdateNode ---
+	node.Description = "Updated Description"
+	node.Status = pb.Status_RUNNING
+
+	err = testManager.UpdateNode(ctx, workflow.ID, node)
+	if err != nil {
+		t.Fatalf("UpdateNode failed: %v", err)
+	}
+
+	updatedNode, err := testManager.GetNode(ctx, workflow.ID, node.NodeId)
+	if err != nil {
+		t.Fatalf("GetNode after update failed: %v", err)
+	}
+
+	if !proto.Equal(updatedNode, node) {
+		t.Errorf("After update, got node %+v, want %+v", updatedNode, node)
+	}
 }
 
 func FuzzApplyNodeEdits(f *testing.F) {
