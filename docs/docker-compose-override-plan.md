@@ -67,14 +67,14 @@ services:
       - postgres-test # Override dependency
     environment:
       # Override DB connection
-      DATABASE_URL: postgres://aisociety:aisociety@postgres-test:5432/aisociety_test_db?sslmode=disable
+      DATABASE_URL: postgres://aisociety:aisociety@postgres-test:55432/aisociety_test_db?sslmode=disable
 
   # Optional: Override workflow-service if needed for E2E tests
   # workflow-service:
   #   depends_on:
   #     - postgres-test
   #   environment:
-  #     DATABASE_URL: postgres://aisociety:aisociety@postgres-test:5432/aisociety_test_db?sslmode=disable
+  #     DATABASE_URL: postgres://aisociety:aisociety@postgres-test:55432/aisociety_test_db?sslmode=disable
 ```
 
 ## Benefits

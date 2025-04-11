@@ -233,12 +233,19 @@ func (s *WorkflowServiceServerImpl) UpdateNode(ctx context.Context, req *pb.Upda
 		return &pb.UpdateNodeResponse{Success: false}, status.Errorf(codes.Internal, "failed to update node: %v", err)
 	}
 
-	// Emit NodeUpdated event
-	if s.EventLogger != nil {
+	// Emit event based on node status
+	if s.EventLogger != nil && req.Node != nil {
 		payloadBytes, err := proto.Marshal(req)
 		if err == nil {
+			eventType := EventNodeUpdated
+			switch req.Node.Status {
+			case 10: // RUNNING
+				eventType = EventNodeDispatched
+			case 1, 2, 3, 4, 5, 6, 7, 8: // PASS, FAIL, SKIPPED, FILTERED, TASK_ERROR, INFRA_ERROR, TIMEOUT, CRASH
+				eventType = EventNodeCompleted
+			}
 			event := Event{
-				Type:      EventNodeUpdated,
+				Type:      eventType,
 				Timestamp: time.Now(),
 				ProtoType: "UpdateNodeRequest",
 				Payload:   payloadBytes,

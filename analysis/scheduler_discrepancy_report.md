@@ -17,7 +17,7 @@ Analyze `docker-compose.yml` and `Makefile` to determine if the absence of a 'sc
     *   Contains targets (`stop-e2e-services`, `rm-e2e-services`, `cleanup-e2e-services`) that explicitly attempt to run `docker-compose stop scheduler` and `docker-compose rm -f scheduler`.
     *   Contains a target `start-scheduler` that executes the `scripts/start_scheduler.sh` script.
     *   Contains a target `bin/scheduler_runner` to build the scheduler executable from source (`services/workflow/cmd_scheduler/main.go`).
-3.  **`scripts/start_scheduler.sh`:** This script runs the compiled `./bin/scheduler_runner` executable directly on the host machine using `nohup`. It connects the scheduler to the *test* database (`postgres://aisociety:aisociety@localhost:5433/aisociety_test_db`) and does **not** use Docker Compose to start the service.
+3.  **`scripts/start_scheduler.sh`:** This script runs the compiled `./bin/scheduler_runner` executable directly on the host machine using `nohup`. It connects the scheduler to the *test* database (`postgres://aisociety:aisociety@localhost:55433/aisociety_test_db`) and does **not** use Docker Compose to start the service.
 
 ## Conclusion & Acceptance Criteria
 

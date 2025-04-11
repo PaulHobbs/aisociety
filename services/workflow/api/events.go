@@ -18,6 +18,7 @@ const (
 	EventWorkflowDispatched EventType = "WorkflowDispatched"
 	EventNodeUpdated        EventType = "NodeUpdated"
 	EventNodeCompleted      EventType = "NodeCompleted"
+	EventNodeDispatched     EventType = "NodeDispatched"
 )
 
 // Event represents a workflow or node event.

@@ -37,7 +37,7 @@ func main() {
 		panic(fmt.Sprintf("failed to listen on %s: %v", addr, err))
 	}
 
-	s := grpc.NewServer()
+	s := grpc.NewServer(grpc.UnaryInterceptor(api.AuthInterceptor))
 
 	workflowSvc := api.NewWorkflowServiceServer(sm, &api.StdoutEventLogger{})
 	pb.RegisterWorkflowServiceServer(s, workflowSvc)

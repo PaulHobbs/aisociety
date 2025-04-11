@@ -58,10 +58,10 @@ start-test-db:
 	fi
 
 test-workflow-storage: start-test-db
-		TEST_DATABASE_URL=postgres://aisociety:aisociety@localhost:5433/aisociety_test_db?sslmode=disable go test -v ./services/workflow/persistence/...
+		TEST_DATABASE_URL=postgres://aisociety:aisociety@localhost:55433/aisociety_test_db?sslmode=disable go test -v ./services/workflow/persistence/...
 	
 fuzz-workflow-storage: start-test-db
-		TEST_DATABASE_URL=postgres://aisociety:aisociety@localhost:5433/aisociety_test_db?sslmode=disable go test -fuzz=Fuzz --fuzztime=2s -v ./services/workflow/persistence
+		TEST_DATABASE_URL=postgres://aisociety:aisociety@localhost:55433/aisociety_test_db?sslmode=disable go test -fuzz=Fuzz --fuzztime=2s -v ./services/workflow/persistence
 init-test-db-schema: start-test-db
 	docker exec -i aisociety_postgres_test psql -U aisociety -d aisociety_test_db < services/workflow/schema/schema.sql
 
@@ -75,9 +75,13 @@ reset-test-db-schema: start-db
 .PHONY: test-persistence-schema
 
 test-persistence-schema: start-test-db
-	TEST_DATABASE_URL=postgres://aisociety:aisociety@localhost:5433/aisociety_test_db?sslmode=disable go test -v ./services/workflow/persistence/schema_test.go
+	TEST_DATABASE_URL=postgres://aisociety:aisociety@localhost:55433/aisociety_test_db?sslmode=disable go test -v ./services/workflow/persistence/schema_test.go
 
 test: test-workflow-storage fuzz-workflow-storage test-pure test-scheduler fuzz-scheduler
+
+.PHONY: test-workflow-api
+test-workflow-api:
+	go test -v ./services/workflow/api/...
 
 .PHONY: test-scheduler fuzz-scheduler
 
@@ -94,25 +98,29 @@ env = os.environ.copy(); env['OPENROUTER_API_KEY'] = key; \
 subprocess.Popen(['bin/node_server'], env=env)"
 
 start-e2e-services: start-test-db
-	TEST_DOCKER up -d postgres-test
-	TEST_DOCKER up -d node-service workflow-service scheduler
+	$(TEST_DOCKER) up -d postgres-test
+	$(TEST_DOCKER) up -d node-service workflow-service scheduler
 
 stop-e2e-services:
-	TEST_DOCKER stop node-service workflow-service scheduler postgres-test
+	$(TEST_DOCKER) stop node-service workflow-service scheduler postgres-test
 rm-e2e-services:
-	TEST_DOCKER rm -f node-service workflow-service scheduler postgres-test
+	$(TEST_DOCKER) rm -f node-service workflow-service scheduler postgres-test
 
 cleanup-e2e-services:
 	@echo "Cleaning up existing containers..."
-	TEST_DOCKER stop node-service workflow-service scheduler postgres-test
-	TEST_DOCKER rm -f node-service workflow-service scheduler postgres-test
+	$(TEST_DOCKER) stop node-service workflow-service scheduler postgres-test
+	$(TEST_DOCKER) rm -f node-service workflow-service scheduler postgres-test
 
 test-e2e-workflow: cleanup-e2e-services start-e2e-services
-	go test -v ./services/workflow/api -run ^TestWorkflowLifecycle_E2E$
+	WORKFLOW_TARGET=localhost:60052 go test -v ./services/workflow/api -run ^TestWorkflowLifecycle_E2E$
 	$(MAKE) stop-e2e-services
 	go test -fuzz=Fuzz --fuzztime=2s -v ./services/scheduler/internal
 
 .PHONY: test-e2e-no-start
 test-e2e-no-start:
-	go test -v ./services/workflow/api -run ^TestWorkflowLifecycle_E2E$
+	WORKFLOW_TARGET=localhost:60052 go test -v ./services/workflow/api -run ^TestWorkflowLifecycle_E2E$
 	go test -fuzz=Fuzz --fuzztime=2s -v ./services/scheduler/internal
+
+.PHONY: logs-workflow-service
+logs-workflow-service:
+	docker-compose -f docker-compose.yml -f docker-compose.test.yml logs workflow-service

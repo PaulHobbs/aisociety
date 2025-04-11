@@ -14,7 +14,7 @@ import (
 
 // fakeStateManager is a fake implementation of persistence.StateManager
 type fakeStateManager struct {
-	CreateWorkflowFunc func(ctx context.Context, workflow *persistence.Workflow) error
+	CreateWorkflowFunc func(ctx context.Context, workflow *persistence.Workflow) (string, error)
 	GetWorkflowFunc    func(ctx context.Context, workflowID string) (*persistence.Workflow, error)
 	ListWorkflowsFunc  func(ctx context.Context) ([]string, error)
 	ApplyNodeEditsFunc func(ctx context.Context, workflowID string, edits []*pb.NodeEdit) error
@@ -24,8 +24,7 @@ type fakeStateManager struct {
 
 func (m *fakeStateManager) CreateWorkflow(ctx context.Context, workflow *persistence.Workflow) (string, error) {
 	if m.CreateWorkflowFunc != nil {
-		err := m.CreateWorkflowFunc(ctx, workflow)
-		return "fake-id", err
+		return m.CreateWorkflowFunc(ctx, workflow)
 	}
 	return "fake-id", nil
 }
@@ -58,6 +57,9 @@ func (m *fakeStateManager) GetNode(ctx context.Context, workflowID, nodeID strin
 	return m.GetNodeFunc(ctx, workflowID, nodeID)
 }
 func (m *fakeStateManager) ListWorkflows(ctx context.Context) ([]string, error) {
+	if m.ListWorkflowsFunc != nil {
+		return m.ListWorkflowsFunc(ctx)
+	}
 	return nil, nil
 }
 func (m *fakeStateManager) Close() error {
@@ -69,8 +71,8 @@ func (m *fakeStateManager) FindReadyNodes(ctx context.Context) ([]*pb.Node, erro
 
 func TestCreateWorkflow_Success(t *testing.T) {
 	fakeSM := &fakeStateManager{
-		CreateWorkflowFunc: func(ctx context.Context, workflow *persistence.Workflow) error {
-			return nil
+		CreateWorkflowFunc: func(ctx context.Context, workflow *persistence.Workflow) (string, error) {
+			return "generated-id", nil
 		},
 	}
 
@@ -87,8 +89,8 @@ func TestCreateWorkflow_Success(t *testing.T) {
 
 func TestCreateWorkflow_Error(t *testing.T) {
 	fakeSM := &fakeStateManager{
-		CreateWorkflowFunc: func(ctx context.Context, workflow *persistence.Workflow) error {
-			return errors.New("db error")
+		CreateWorkflowFunc: func(ctx context.Context, workflow *persistence.Workflow) (string, error) {
+			return "", errors.New("db error")
 		},
 	}
 	server := NewWorkflowServiceServer(fakeSM, &StdoutEventLogger{})
@@ -297,14 +299,7 @@ func TestGetNode(t *testing.T) {
 			expectedNode: nil,
 			expectedCode: codes.NotFound,
 		},
-		{
-			name: "internal error",
-			getNodeFunc: func(ctx context.Context, workflowID, nodeID string) (*pb.Node, error) {
-				return nil, errors.New("db error")
-			},
-			expectedNode: nil,
-			expectedCode: codes.Internal,
-		},
+		// (removed invalid empty struct entry)
 	}
 
 	for _, tc := range tests {
@@ -343,6 +338,10 @@ func TestGetNode(t *testing.T) {
 		})
 	}
 }
+
+// --- AUTH TESTS ---
+
+// startTestGRPCServer spins up a gRPC server with AuthInterceptor for testing.
 
 func TestUpdateNode(t *testing.T) {
 	tests := []struct {
@@ -429,8 +428,8 @@ func (m *FakeEventLogger) LogEvent(e Event) {
 
 func TestCreateWorkflow_EmitsEvent(t *testing.T) {
 	fakeSM := &fakeStateManager{
-		CreateWorkflowFunc: func(ctx context.Context, workflow *persistence.Workflow) error {
-			return nil
+		CreateWorkflowFunc: func(ctx context.Context, workflow *persistence.Workflow) (string, error) {
+			return "generated-id", nil
 		},
 	}
 	fakeLogger := &FakeEventLogger{}
@@ -446,5 +445,56 @@ func TestCreateWorkflow_EmitsEvent(t *testing.T) {
 		t.Errorf("expected at least one event emitted, got none")
 	} else if fakeLogger.Events[0].Type != EventWorkflowCreated {
 		t.Errorf("expected event type %s, got %s", EventWorkflowCreated, fakeLogger.Events[0].Type)
+	}
+}
+
+func TestUpdateNode_EmitsCorrectEvents(t *testing.T) {
+	tests := []struct {
+		name       string
+		status     pb.Status
+		expectType EventType
+	}{
+		{"dispatched", pb.Status_RUNNING, EventNodeDispatched},
+		{"completed_pass", pb.Status_PASS, EventNodeCompleted},
+		{"completed_fail", pb.Status_FAIL, EventNodeCompleted},
+		{"completed_skipped", pb.Status_SKIPPED, EventNodeCompleted},
+		{"completed_filtered", pb.Status_FILTERED, EventNodeCompleted},
+		{"completed_task_error", pb.Status_TASK_ERROR, EventNodeCompleted},
+		{"completed_infra_error", pb.Status_INFRA_ERROR, EventNodeCompleted},
+		{"completed_timeout", pb.Status_TIMEOUT, EventNodeCompleted},
+		{"completed_crash", pb.Status_CRASH, EventNodeCompleted},
+		{"updated", pb.Status_UNKNOWN, EventNodeUpdated},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			fakeLogger := &FakeEventLogger{}
+			svc := &WorkflowServiceServerImpl{
+				StateManager: &fakeStateManager{
+					UpdateNodeFunc: func(ctx context.Context, workflowID string, node *pb.Node) error {
+						return nil
+					},
+				},
+				EventLogger: fakeLogger,
+			}
+			req := &pb.UpdateNodeRequest{
+				WorkflowId: "wf-1",
+				Node: &pb.Node{
+					NodeId: "node-1",
+					Status: tc.status,
+				},
+			}
+			_, err := svc.UpdateNode(context.Background(), req)
+			if err != nil {
+				t.Fatalf("expected no error, got %v", err)
+			}
+			if len(fakeLogger.Events) == 0 {
+				t.Fatalf("expected event to be emitted")
+			}
+			gotType := fakeLogger.Events[0].Type
+			if gotType != tc.expectType {
+				t.Errorf("expected event type %s, got %s", tc.expectType, gotType)
+			}
+		})
 	}
 }

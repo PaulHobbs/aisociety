@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DB_URL="postgres://aisociety:aisociety@localhost:5433/aisociety_test_db?sslmode=disable"
+DB_URL="postgres://aisociety:aisociety@localhost:55433/aisociety_test_db?sslmode=disable"
 
 echo "Starting scheduler_runner..."
 nohup env DATABASE_URL="$DB_URL" ./bin/scheduler_runner > scheduler.log 2>&1 &

@@ -18,7 +18,7 @@ var testManager *PostgresStateManager
 func TestMain(m *testing.M) {
 	connStr := os.Getenv("TEST_DATABASE_URL")
 	if connStr == "" {
-		connStr = "postgres://aisociety:aTEST_DATABASE_isociety@localhost:5433/aisociety_test_db?sslmode=disable"
+		connStr = "postgres://aisociety:aTEST_DATABASE_isociety@localhost:55433/aisociety_test_db?sslmode=disable"
 	}
 
 	ctx := context.Background()
