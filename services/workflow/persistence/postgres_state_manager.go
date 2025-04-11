@@ -141,7 +141,7 @@ func serializeNodeData(edit *pb.NodeEdit) ([]byte, []byte, []byte, error) {
 func updateNodeRecord(ctx context.Context, tx pgx.Tx, workflowID string, edit *pb.NodeEdit, nodeBytes, allTasksBytes, editsBytes []byte) error {
 	result, err := tx.Exec(ctx,
 		`UPDATE nodes SET status = $1, node = $2, all_tasks = $3, edits = $4, updated_at = $5
-         WHERE workflow_id = $6 AND id = $7`,
+		       WHERE workflow_id = $6 AND id = $7`,
 		int(edit.Node.Status), nodeBytes, allTasksBytes, editsBytes, time.Now(), workflowID, edit.Node.NodeId)
 	if err != nil {
 		return fmt.Errorf("failed to apply UPDATE edit: %w", err)
@@ -350,7 +350,7 @@ func (p *PostgresStateManager) CreateNode(ctx context.Context, workflowID string
 		return fmt.Errorf("failed to marshal node proto: %w", err)
 	}
 
-	query := `INSERT INTO nodes (workflow_id, node_id, status, node) VALUES ($1, $2, $3, $4)`
+	query := `INSERT INTO nodes (workflow_id, id, status, node) VALUES ($1, $2, $3, $4)`
 	_, err = p.pool.Exec(ctx, query, workflowID, node.NodeId, int32(node.Status), nodeBytes)
 	if err != nil {
 		return fmt.Errorf("CreateNode insert failed: %w", err)
@@ -359,7 +359,7 @@ func (p *PostgresStateManager) CreateNode(ctx context.Context, workflowID string
 }
 
 func (p *PostgresStateManager) GetNode(ctx context.Context, workflowID, nodeID string) (*pb.Node, error) {
-	query := `SELECT node FROM nodes WHERE workflow_id = $1 AND node_id = $2`
+	query := `SELECT node FROM nodes WHERE workflow_id = $1 AND id = $2`
 	var nodeBytes []byte
 	err := p.pool.QueryRow(ctx, query, workflowID, nodeID).Scan(&nodeBytes)
 	if err != nil {

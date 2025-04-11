@@ -35,12 +35,15 @@ services:
       - postgres
     environment:
       DATABASE_URL: postgres://aisociety:aisociety@postgres:5432/aisociety_db?sslmode=disable
+      NODE_TARGET: node-service:50051
+      WORKFLOW_PORT: 50052
+      NODE_PORT: 50051
     ports:
       - "50052:50052"
   scheduler:
     build:
       context: .
-      dockerfile: services/workflow/Dockerfile
+      dockerfile: services/scheduler/Dockerfile
     container_name: scheduler
     depends_on:
       - postgres

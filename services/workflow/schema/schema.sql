@@ -16,7 +16,6 @@ CREATE TABLE workflows (
 CREATE TABLE nodes (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     workflow_id UUID REFERENCES workflows(id) ON DELETE CASCADE,
-    node_id TEXT NOT NULL,
     status INT,            -- protobuf: Status enum
     node BYTEA,            -- protobuf: Node, all fields except these...
     all_tasks BYTEA,       -- protobuf: repeated Task messages (binary blob)
@@ -26,7 +25,6 @@ CREATE TABLE nodes (
 );
 
 CREATE INDEX idx_nodes_workflow_id ON nodes(workflow_id);
-CREATE INDEX idx_nodes_node_id ON nodes(id);
 
 -- Explicit graph edges (parent-child relationships)
 CREATE TABLE node_edges (

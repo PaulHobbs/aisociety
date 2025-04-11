@@ -9,8 +9,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	pb "paul.hobbs.page/aisociety/protos"
+	scheduler "paul.hobbs.page/aisociety/services/scheduler/internal"
 	"paul.hobbs.page/aisociety/services/workflow/persistence"
-	"paul.hobbs.page/aisociety/services/workflow/scheduler"
 )
 
 type grpcNodeClientWrapper struct {

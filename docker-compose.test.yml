@@ -7,6 +7,7 @@ services:
     environment:
       DATABASE_URL: postgres://aisociety:aisociety@postgres-test:5432/aisociety_test_db?sslmode=disable
       WORKFLOW_DB_URL: postgres://aisociety:aisociety@postgres-test:5432/aisociety_test_db?sslmode=disable
+      NODE_TARGET: node-service:50054
     ports:
       - "60052:50052"
 
@@ -15,6 +16,7 @@ services:
       - postgres-test
     environment:
       DATABASE_URL: postgres://aisociety:aisociety@postgres-test:5432/aisociety_test_db?sslmode=disable
+      WORKFLOW_PORT: 50053
     ports:
       - "60053:50053"
 
@@ -23,5 +25,6 @@ services:
       - postgres-test
     environment:
       DATABASE_URL: postgres://aisociety:aisociety@postgres-test:5432/aisociety_test_db?sslmode=disable
+      NODE_PORT: 50054
     ports:
       - "60054:50054"

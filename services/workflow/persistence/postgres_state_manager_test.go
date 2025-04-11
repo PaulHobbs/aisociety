@@ -18,7 +18,7 @@ var testManager *PostgresStateManager
 func TestMain(m *testing.M) {
 	connStr := os.Getenv("TEST_DATABASE_URL")
 	if connStr == "" {
-		panic("TEST_DATABASE_URL not set")
+		connStr = "postgres://aisociety:aTEST_DATABASE_isociety@localhost:5433/aisociety_test_db?sslmode=disable"
 	}
 
 	ctx := context.Background()
@@ -57,7 +57,7 @@ func TestCreateAndGetWorkflow(t *testing.T) {
 		Status:      pb.Status_UNKNOWN,
 	}
 
-	err := testManager.CreateWorkflow(ctx, workflow)
+	_, err := testManager.CreateWorkflow(ctx, workflow)
 	if err != nil {
 		t.Fatalf("CreateWorkflow failed: %v", err)
 	}
@@ -82,7 +82,7 @@ func TestCreateAndGetNode(t *testing.T) {
 		Status:      pb.Status_UNKNOWN,
 	}
 
-	err := testManager.CreateWorkflow(ctx, workflow)
+	_, err := testManager.CreateWorkflow(ctx, workflow)
 	if err != nil {
 		t.Fatalf("CreateWorkflow failed: %v", err)
 	}
@@ -136,7 +136,7 @@ func FuzzApplyNodeEdits(f *testing.F) {
 			Description: "Workflow for fuzzing",
 			Status:      pb.Status_UNKNOWN,
 		}
-		err := testManager.CreateWorkflow(ctx, workflow)
+		_, err := testManager.CreateWorkflow(ctx, workflow)
 		if err != nil {
 			t.Fatalf("CreateWorkflow failed: %v", err)
 		}
