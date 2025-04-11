@@ -15,7 +15,6 @@ type StateManager interface {
 	// Workflow operations
 	CreateWorkflow(ctx context.Context, workflow *Workflow) (string, error)
 	GetWorkflow(ctx context.Context, workflowID string) (*Workflow, error)
-	UpdateWorkflowStatus(ctx context.Context, workflowID string, status pb.Status) error
 	ListWorkflows(ctx context.Context) ([]string, error)
 
 	// Node operations

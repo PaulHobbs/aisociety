@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   postgres:
-    image: postgres:15
+    image: postgres:17
     container_name: aisociety_postgres
     environment:
       POSTGRES_USER: aisociety
@@ -40,6 +40,7 @@ services:
       NODE_PORT: 50051
     ports:
       - "50052:50052"
+
   scheduler:
     build:
       context: .
@@ -51,19 +52,5 @@ services:
       DATABASE_URL: postgres://aisociety:aisociety@postgres:5432/aisociety_db?sslmode=disable
 
 
-  postgres-test:
-    image: postgres:15
-    container_name: aisociety_postgres_test
-    environment:
-      POSTGRES_USER: aisociety
-      POSTGRES_PASSWORD: aisociety
-      POSTGRES_DB: aisociety_test_db
-    ports:
-      - "5433:5432"
-    volumes:
-      - postgres_test_data:/var/lib/postgresql/data
-      - ./services/workflow/schema/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
-
 volumes:
   postgres_data:
-  postgres_test_data:

@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	pb "paul.hobbs.page/aisociety/protos"
 
 	"google.golang.org/grpc"
@@ -26,25 +27,30 @@ func TestWorkflowLifecycle_E2E(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
+	// Generate UUIDs for nodes
+	aID := uuid.New().String()
+	bID := uuid.New().String()
+	cID := uuid.New().String()
+
 	// Create a sample workflow with 3 nodes: A -> B -> C
 	createResp, err := client.CreateWorkflow(ctx, &pb.CreateWorkflowRequest{
 		Nodes: []*pb.Node{
 			{
-				NodeId:      "A",
+				NodeId:      aID,
 				Description: "Node A",
 				ParentIds:   nil,
 				Status:      pb.Status_BLOCKED,
 			},
 			{
-				NodeId:      "B",
+				NodeId:      bID,
 				Description: "Node B",
-				ParentIds:   []string{"A"},
+				ParentIds:   []string{aID},
 				Status:      pb.Status_BLOCKED,
 			},
 			{
-				NodeId:      "C",
+				NodeId:      cID,
 				Description: "Node C",
-				ParentIds:   []string{"B"},
+				ParentIds:   []string{bID},
 				Status:      pb.Status_BLOCKED,
 			},
 		},
@@ -98,7 +104,7 @@ pollLoop:
 	_, err = client.UpdateNode(ctx, &pb.UpdateNodeRequest{
 		WorkflowId: workflowID,
 		Node: &pb.Node{
-			NodeId: "B",
+			NodeId: bID,
 			Status: pb.Status_FAIL,
 		},
 	})
@@ -109,7 +115,7 @@ pollLoop:
 	// Verify node B is marked as FAIL
 	getNodeResp, err := client.GetNode(ctx, &pb.GetNodeRequest{
 		WorkflowId: workflowID,
-		NodeId:     "B",
+		NodeId:     bID,
 	})
 	if err != nil {
 		t.Fatalf("GetNode failed: %v", err)

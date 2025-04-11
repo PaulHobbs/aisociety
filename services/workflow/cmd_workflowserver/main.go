@@ -21,9 +21,9 @@ func main() {
 	}
 	addr := ":" + port
 
-	connStr := os.Getenv("WORKFLOW_DB_URL")
+	connStr := os.Getenv("DATABASE_URL")
 	if connStr == "" {
-		panic("WORKFLOW_DB_URL not set")
+		panic("DATABASE_URL not set")
 	}
 
 	ctx := context.Background()
@@ -39,7 +39,7 @@ func main() {
 
 	s := grpc.NewServer()
 
-	workflowSvc := api.NewWorkflowServiceServer(sm)
+	workflowSvc := api.NewWorkflowServiceServer(sm, &api.StdoutEventLogger{})
 	pb.RegisterWorkflowServiceServer(s, workflowSvc)
 
 	reflection.Register(s)

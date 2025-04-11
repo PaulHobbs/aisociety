@@ -66,9 +66,6 @@ func (m *fakeStateManager) Close() error {
 func (m *fakeStateManager) FindReadyNodes(ctx context.Context) ([]*pb.Node, error) {
 	return nil, nil
 }
-func (m *fakeStateManager) UpdateWorkflowStatus(ctx context.Context, workflowID string, status pb.Status) error {
-	return nil
-}
 
 func TestCreateWorkflow_Success(t *testing.T) {
 	fakeSM := &fakeStateManager{
@@ -77,7 +74,7 @@ func TestCreateWorkflow_Success(t *testing.T) {
 		},
 	}
 
-	server := NewWorkflowServiceServer(fakeSM)
+	server := NewWorkflowServiceServer(fakeSM, &StdoutEventLogger{})
 
 	resp, err := server.CreateWorkflow(context.Background(), &pb.CreateWorkflowRequest{})
 	if err != nil {
@@ -94,7 +91,7 @@ func TestCreateWorkflow_Error(t *testing.T) {
 			return errors.New("db error")
 		},
 	}
-	server := NewWorkflowServiceServer(fakeSM)
+	server := NewWorkflowServiceServer(fakeSM, &StdoutEventLogger{})
 
 	_, err := server.CreateWorkflow(context.Background(), &pb.CreateWorkflowRequest{})
 	if err == nil {
@@ -104,7 +101,7 @@ func TestCreateWorkflow_Error(t *testing.T) {
 
 func TestGetWorkflow(t *testing.T) {
 	fakeSM := &fakeStateManager{}
-	server := NewWorkflowServiceServer(fakeSM)
+	server := NewWorkflowServiceServer(fakeSM, &StdoutEventLogger{})
 
 	t.Run("success", func(t *testing.T) {
 		fakeSM.GetWorkflowFunc = func(ctx context.Context, workflowID string) (*persistence.Workflow, error) {
@@ -189,7 +186,7 @@ func TestListWorkflows_Error(t *testing.T) {
 }
 func TestUpdateWorkflow(t *testing.T) {
 	fakeSM := &fakeStateManager{}
-	server := NewWorkflowServiceServer(fakeSM)
+	server := NewWorkflowServiceServer(fakeSM, &StdoutEventLogger{})
 
 	t.Run("success", func(t *testing.T) {
 		fakeSM.GetWorkflowFunc = func(ctx context.Context, workflowID string) (*persistence.Workflow, error) {
@@ -419,5 +416,35 @@ func TestUpdateNode(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+type FakeEventLogger struct {
+	Events []Event
+}
+
+func (m *FakeEventLogger) LogEvent(e Event) {
+	m.Events = append(m.Events, e)
+}
+
+func TestCreateWorkflow_EmitsEvent(t *testing.T) {
+	fakeSM := &fakeStateManager{
+		CreateWorkflowFunc: func(ctx context.Context, workflow *persistence.Workflow) error {
+			return nil
+		},
+	}
+	fakeLogger := &FakeEventLogger{}
+
+	server := NewWorkflowServiceServer(fakeSM, fakeLogger)
+
+	_, err := server.CreateWorkflow(context.Background(), &pb.CreateWorkflowRequest{})
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if len(fakeLogger.Events) == 0 {
+		t.Errorf("expected at least one event emitted, got none")
+	} else if fakeLogger.Events[0].Type != EventWorkflowCreated {
+		t.Errorf("expected event type %s, got %s", EventWorkflowCreated, fakeLogger.Events[0].Type)
 	}
 }

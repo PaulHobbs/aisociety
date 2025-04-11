@@ -1,6 +1,7 @@
 # Use 'docker-compose up' or 'make start-e2e-services' to run services in containers.
 
 PROTO_SRC=protos/workflow_node.proto
+TEST_DOCKER=docker-compose -f docker-compose.yml -f docker-compose.test.yml
 
 all: proto build
 
@@ -49,7 +50,7 @@ test-e2e: check-server
 start-test-db:
 	@if [ "$$(docker ps -q -f name=aisociety_postgres_test)" = "" ]; then \
 		echo "Starting postgres-test container..."; \
-		docker-compose up -d postgres-test; \
+		$(TEST_DOCKER) up -d postgres-test; \
 		echo "Waiting for postgres-test to initialize..."; \
 		sleep 5; \
 	else \
@@ -65,22 +66,16 @@ init-test-db-schema: start-test-db
 	docker exec -i aisociety_postgres_test psql -U aisociety -d aisociety_test_db < services/workflow/schema/schema.sql
 
 
-reset-test-db-schema: start-test-db
-	docker exec -i aisociety_postgres_test psql -U aisociety -d aisociety_test_db -c "DROP TABLE IF EXISTS node_edges CASCADE;"
-	docker exec -i aisociety_postgres_test psql -U aisociety -d aisociety_test_db -c "DROP TABLE IF EXISTS nodes CASCADE;"
-	docker exec -i aisociety_postgres_test psql -U aisociety -d aisociety_test_db -c "DROP TABLE IF EXISTS workflows CASCADE;"
-	docker exec -i aisociety_postgres_test psql -U aisociety -d aisociety_test_db < services/workflow/schema/schema.sql
+reset-test-db-schema: start-db
+	docker exec -i aisociety_postgres psql -U aisociety -d aisociety_db -c "DROP TABLE IF EXISTS node_edges CASCADE;"
+	docker exec -i aisociety_postgres psql -U aisociety -d aisociety_db -c "DROP TABLE IF EXISTS nodes CASCADE;"
+	docker exec -i aisociety_postgres psql -U aisociety -d aisociety_db -c "DROP TABLE IF EXISTS workflows CASCADE;"
+	docker exec -i aisociety_postgres psql -U aisociety -d aisociety_db < services/workflow/schema/schema.sql
 
-.PHONY: test-persistence-schema init-test-db-logs
-
-init-test-db-logs:
-	docker-compose down -v
-	docker-compose up -d postgres-test
-	sleep 5
-	docker logs aisociety_postgres_test
+.PHONY: test-persistence-schema
 
 test-persistence-schema: start-test-db
-	URL=postgres://aisociety:aTEST_DATABASE_isociety@localhost:5433/aisociety_test_db?sslmode=disable go test -v ./services/workflow/persistence/schema_test.go
+	TEST_DATABASE_URL=postgres://aisociety:aisociety@localhost:5433/aisociety_test_db?sslmode=disable go test -v ./services/workflow/persistence/schema_test.go
 
 test: test-workflow-storage fuzz-workflow-storage test-pure test-scheduler fuzz-scheduler
 
@@ -99,25 +94,25 @@ env = os.environ.copy(); env['OPENROUTER_API_KEY'] = key; \
 subprocess.Popen(['bin/node_server'], env=env)"
 
 start-e2e-services: start-test-db
-	docker-compose -f docker-compose.yml -f docker-compose.test.yml up -d postgres-test
-	docker-compose -f docker-compose.yml -f docker-compose.test.yml up -d node-service workflow-service scheduler
+	TEST_DOCKER up -d postgres-test
+	TEST_DOCKER up -d node-service workflow-service scheduler
 
 stop-e2e-services:
-	docker-compose -f docker-compose.yml -f docker-compose.test.yml stop node-service workflow-service scheduler postgres-test
+	TEST_DOCKER stop node-service workflow-service scheduler postgres-test
 rm-e2e-services:
-	docker-compose -f docker-compose.yml -f docker-compose.test.yml rm -f node-service workflow-service scheduler postgres-test
+	TEST_DOCKER rm -f node-service workflow-service scheduler postgres-test
 
 cleanup-e2e-services:
 	@echo "Cleaning up existing containers..."
-	docker-compose -f docker-compose.yml -f docker-compose.test.yml stop node-service workflow-service scheduler postgres-test
-	docker-compose -f docker-compose.yml -f docker-compose.test.yml rm -f node-service workflow-service scheduler postgres-test
+	TEST_DOCKER stop node-service workflow-service scheduler postgres-test
+	TEST_DOCKER rm -f node-service workflow-service scheduler postgres-test
 
 test-e2e-workflow: cleanup-e2e-services start-e2e-services
 	go test -v ./services/workflow/api -run ^TestWorkflowLifecycle_E2E$
 	$(MAKE) stop-e2e-services
-	go test -fuzz=Fuzz --fuzztime=2s -v ./services/scheduler/...
+	go test -fuzz=Fuzz --fuzztime=2s -v ./services/scheduler/internal
 
 .PHONY: test-e2e-no-start
 test-e2e-no-start:
 	go test -v ./services/workflow/api -run ^TestWorkflowLifecycle_E2E$
-	go test -fuzz=Fuzz --fuzztime=2s -v ./services/scheduler/...
+	go test -fuzz=Fuzz --fuzztime=2s -v ./services/scheduler/internal

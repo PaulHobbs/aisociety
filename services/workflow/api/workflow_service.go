@@ -18,12 +18,14 @@ import (
 // WorkflowServiceServerImpl implements pb.WorkflowServiceServer
 type WorkflowServiceServerImpl struct {
 	pb.UnimplementedWorkflowServiceServer
-	StateManager *persistence.PostgresStateManager
+	StateManager persistence.StateManager
+	EventLogger  EventLogger
 }
 
-func NewWorkflowServiceServer(sm *persistence.PostgresStateManager) *WorkflowServiceServerImpl {
+func NewWorkflowServiceServer(sm persistence.StateManager, logger EventLogger) *WorkflowServiceServerImpl {
 	return &WorkflowServiceServerImpl{
 		StateManager: sm,
+		EventLogger:  logger,
 	}
 }
 
@@ -50,6 +52,20 @@ func (s *WorkflowServiceServerImpl) CreateWorkflow(ctx context.Context, req *pb.
 		err := s.StateManager.CreateNode(ctx, workflowID, node)
 		if err != nil {
 			return nil, err
+		}
+	}
+
+	// Emit WorkflowCreated event
+	if s.EventLogger != nil {
+		payloadBytes, err := proto.Marshal(req)
+		if err == nil {
+			event := Event{
+				Type:      EventWorkflowCreated,
+				Timestamp: time.Now(),
+				ProtoType: "CreateWorkflowRequest",
+				Payload:   payloadBytes,
+			}
+			s.EventLogger.LogEvent(event)
 		}
 	}
 
@@ -169,6 +185,20 @@ func (s *WorkflowServiceServerImpl) UpdateWorkflow(ctx context.Context, req *pb.
 		}
 	}
 
+	// Emit WorkflowUpdated event
+	if s.EventLogger != nil {
+		payloadBytes, err := proto.Marshal(req)
+		if err == nil {
+			event := Event{
+				Type:      EventWorkflowUpdated,
+				Timestamp: time.Now(),
+				ProtoType: "UpdateWorkflowRequest",
+				Payload:   payloadBytes,
+			}
+			s.EventLogger.LogEvent(event)
+		}
+	}
+
 	return &pb.UpdateWorkflowResponse{Success: true}, nil
 }
 
@@ -201,6 +231,20 @@ func (s *WorkflowServiceServerImpl) UpdateNode(ctx context.Context, req *pb.Upda
 			return &pb.UpdateNodeResponse{Success: false}, status.Errorf(codes.NotFound, "workflow not found: %v", err)
 		}
 		return &pb.UpdateNodeResponse{Success: false}, status.Errorf(codes.Internal, "failed to update node: %v", err)
+	}
+
+	// Emit NodeUpdated event
+	if s.EventLogger != nil {
+		payloadBytes, err := proto.Marshal(req)
+		if err == nil {
+			event := Event{
+				Type:      EventNodeUpdated,
+				Timestamp: time.Now(),
+				ProtoType: "UpdateNodeRequest",
+				Payload:   payloadBytes,
+			}
+			s.EventLogger.LogEvent(event)
+		}
 	}
 	return &pb.UpdateNodeResponse{Success: true}, nil
 }

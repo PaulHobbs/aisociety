@@ -68,7 +68,6 @@ At the heart of the service are a few key concepts:
     type StateManager interface {
         CreateWorkflow(ctx context.Context, workflow *pb.Workflow) error
         GetWorkflow(ctx context.Context, workflowID string) (*pb.Workflow, error)
-        UpdateWorkflowStatus(ctx context.Context, workflowID string, status pb.Status) error // Added for overall status
 
         CreateNode(ctx context.Context, node *pb.Node) error
         GetNode(ctx context.Context, workflowID, nodeID string) (*pb.Node, error)
