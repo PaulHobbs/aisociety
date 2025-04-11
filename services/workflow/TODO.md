@@ -10,7 +10,12 @@
 *   [ ] Build basic API for defining and launching workflows.
 *   [ ] Implement event emission for key state changes.
 *   [ ] Set up basic monitoring dashboard/interface.
-*   [ ] Integrate with [[protos/TODO.md|Protobuf definitions]] once stable.
+*   [ ] Plan/Implement API Security (Authentication/Authorization) (Ref: DESIGN.md L117)
+*   [ ] Plan strategy for handling large task data artifacts (Ref: DESIGN.md L118)
+*   [ ] Design/Implement advanced scheduling logic (priorities, load, etc.) (Ref: DESIGN.md L115)
+*   [ ] Define and implement configuration management strategy (env vars, files) (Ref: DESIGN.md L107)
+*   [ ] Analyze and implement necessary concurrency controls beyond transactional edits (Ref: DESIGN.md L108)
+*   [ ] Evaluate/Implement separate 'nodes' table for performance optimization (Ref: implementation.md L88)
 ---
 
 ### Detailed Implementation Plan (Milestone Commits)
@@ -20,7 +25,6 @@
 - [x] Implement PostgreSQL connection setup and configuration.
 - [x] Implement `CreateWorkflow` method: persist initial workflow and nodes.
 - [x] Implement `GetWorkflow` method: retrieve and deserialize workflow.
-- [ ] Implement `UpdateWorkflowStatus` method.
 - [x] Implement `CreateNode` and `UpdateNode` methods with protobuf serialization.
 - [x] Implement transactional `ApplyNodeEdits` method.
 - [ ] Write unit tests for `StateManager` methods.
