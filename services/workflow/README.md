@@ -13,4 +13,20 @@
 
 **Architecture:** Based on adapting an existing orchestration system. See [[services/workflow/Architecture.md]].
 
+## Authentication & Configuration
+
+This service uses environment-based static tokens for authentication. Tokens and their associated roles are configured via the `WORKFLOW_API_TOKENS` environment variable.
+
+**How to configure:**
+- Set the environment variable before starting the service.
+- Format: `role1:token1,role2:token2`
+  - Example: `WORKFLOW_API_TOKENS="admin:supersecrettoken,user:othertoken"`
+
+**How it works:**
+- On startup, the service parses the variable and maps each token to its role.
+- Clients must present the token as a Bearer token in the gRPC `Authorization` header.
+- Example header: `Authorization: Bearer supersecrettoken`
+
+**No secrets are present in the codebase.** All authentication tokens must be provided via environment variables.
+
 **Current Tasks:** See [[services/workflow/TODO.md]].

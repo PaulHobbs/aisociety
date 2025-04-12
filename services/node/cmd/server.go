@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	port := os.Getenv("NODE_PORT")
+	port := os.Getenv("PORT")
 	if port == "" {
 		port = "50051"
 	}

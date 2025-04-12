@@ -10,12 +10,16 @@ import (
 	pb "paul.hobbs.page/aisociety/protos"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 )
 
 func TestWorkflowLifecycle_E2E(t *testing.T) {
+	// Set up authentication tokens for the test
+	os.Setenv("WORKFLOW_API_TOKENS", "admin:admin-token,user:user-token")
+
 	target := os.Getenv("WORKFLOW_TARGET")
 	if target == "" {
-		target = "localhost:50052"
+		target = "localhost:60052"
 	}
 	conn, err := grpc.Dial(target, grpc.WithInsecure(), grpc.WithBlock(), grpc.WithTimeout(5*time.Second))
 	if err != nil {
@@ -26,6 +30,9 @@ func TestWorkflowLifecycle_E2E(t *testing.T) {
 	client := pb.NewWorkflowServiceClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
+
+	// Add authentication metadata to context
+	ctx = metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer admin-token")
 
 	// Generate UUIDs for nodes
 	aID := uuid.New().String()

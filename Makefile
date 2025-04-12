@@ -99,17 +99,17 @@ subprocess.Popen(['bin/node_server'], env=env)"
 
 start-e2e-services: start-test-db
 	$(TEST_DOCKER) up -d postgres-test
-	$(TEST_DOCKER) up -d node-service workflow-service scheduler
+	$(TEST_DOCKER) up -d node workflow scheduler
 
 stop-e2e-services:
-	$(TEST_DOCKER) stop node-service workflow-service scheduler postgres-test
+	$(TEST_DOCKER) stop node workflow scheduler postgres-test
 rm-e2e-services:
-	$(TEST_DOCKER) rm -f node-service workflow-service scheduler postgres-test
+	$(TEST_DOCKER) rm -f node workflow scheduler postgres-test
 
 cleanup-e2e-services:
 	@echo "Cleaning up existing containers..."
-	$(TEST_DOCKER) stop node-service workflow-service scheduler postgres-test
-	$(TEST_DOCKER) rm -f node-service workflow-service scheduler postgres-test
+	$(TEST_DOCKER) stop node workflow scheduler postgres-test
+	$(TEST_DOCKER) rm -f node workflow scheduler postgres-test
 
 test-e2e-workflow: cleanup-e2e-services start-e2e-services
 	WORKFLOW_TARGET=localhost:60052 go test -v ./services/workflow/api -run ^TestWorkflowLifecycle_E2E$
@@ -121,6 +121,6 @@ test-e2e-no-start:
 	WORKFLOW_TARGET=localhost:60052 go test -v ./services/workflow/api -run ^TestWorkflowLifecycle_E2E$
 	go test -fuzz=Fuzz --fuzztime=2s -v ./services/scheduler/internal
 
-.PHONY: logs-workflow-service
-logs-workflow-service:
-	docker-compose -f docker-compose.yml -f docker-compose.test.yml logs workflow-service
+.PHONY: logs-workflow
+logs-workflow:
+	$(TEST_DOCKER) logs workflow

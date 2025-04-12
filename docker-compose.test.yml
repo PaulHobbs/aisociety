@@ -1,33 +1,32 @@
 version: '3.8'
 
 services:
+  node:
+    depends_on:
+      - postgres-test
+    environment:
+      DATABASE_URL: postgres://aisociety:aisociety@postgres-test:55432/aisociety_test_db?sslmode=disable
+      PORT: 60051
+    ports:
+      - "60051:60051"
+
+  workflow:
+    depends_on:
+      - postgres-test
+      - scheduler
+    environment:
+      DATABASE_URL: postgres://aisociety:aisociety@postgres-test:55432/aisociety_test_db?sslmode=disable
+      PORT: 60052
+    ports:
+      - "60052:60052"
+
   scheduler:
     depends_on:
       - postgres-test
+      - node
     environment:
       DATABASE_URL: postgres://aisociety:aisociety@postgres-test:55432/aisociety_test_db?sslmode=disable
-      NODE_TARGET: node-service:50054
-    ports:
-      - "60051:50052"
-
-  workflow-service:
-    depends_on:
-      - postgres-test
-    environment:
-      DATABASE_URL: postgres://aisociety:aisociety@postgres-test:55432/aisociety_test_db?sslmode=disable
-      WORKFLOW_PORT: 50052
-    ports:
-      - "60052:50052"
-
-  node-service:
-    depends_on:
-      - postgres-test
-    environment:
-      DATABASE_URL: postgres://aisociety:aisociety@postgres-test:55432/aisociety_test_db?sslmode=disable
-      NODE_PORT: 50054
-    ports:
-      - "60054:50054"
-
+      NODE_TARGET: node:60051
   
   postgres-test:
     image: postgres:17

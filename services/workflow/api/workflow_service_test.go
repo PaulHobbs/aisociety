@@ -3,14 +3,26 @@ package api
 import (
 	"context"
 	"errors"
+	"os"
 	"testing"
 
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
 	pb "paul.hobbs.page/aisociety/protos"
 	"paul.hobbs.page/aisociety/services/workflow/persistence"
 )
+
+func authenticatedContext() context.Context {
+	return metadata.NewIncomingContext(context.Background(), metadata.Pairs("authorization", "Bearer admin-token"))
+}
+
+func TestMain(m *testing.M) {
+	// Set up authentication tokens for all tests
+	os.Setenv("WORKFLOW_API_TOKENS", "admin:admin-token,user:user-token")
+	os.Exit(m.Run())
+}
 
 // fakeStateManager is a fake implementation of persistence.StateManager
 type fakeStateManager struct {
@@ -78,7 +90,7 @@ func TestCreateWorkflow_Success(t *testing.T) {
 
 	server := NewWorkflowServiceServer(fakeSM, &StdoutEventLogger{})
 
-	resp, err := server.CreateWorkflow(context.Background(), &pb.CreateWorkflowRequest{})
+	resp, err := server.CreateWorkflow(authenticatedContext(), &pb.CreateWorkflowRequest{})
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -95,7 +107,7 @@ func TestCreateWorkflow_Error(t *testing.T) {
 	}
 	server := NewWorkflowServiceServer(fakeSM, &StdoutEventLogger{})
 
-	_, err := server.CreateWorkflow(context.Background(), &pb.CreateWorkflowRequest{})
+	_, err := server.CreateWorkflow(authenticatedContext(), &pb.CreateWorkflowRequest{})
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}

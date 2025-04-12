@@ -15,10 +15,7 @@ import (
 )
 
 func main() {
-	port := os.Getenv("WORKFLOW_PORT")
-	if port == "" {
-		port = "50052"
-	}
+	port := os.Getenv("PORT")
 	addr := ":" + port
 
 	connStr := os.Getenv("DATABASE_URL")

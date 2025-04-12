@@ -3,6 +3,9 @@ package api
 
 import (
 	"context"
+	"encoding/json"
+	"log"
+	"os"
 	"strings"
 
 	"google.golang.org/grpc"
@@ -19,10 +22,59 @@ const (
 	RoleUser  Role = "user"
 )
 
-// Dummy in-memory token-to-role mapping for demo/testing.
-var tokenRoleMap = map[string]Role{
-	"admin-token": RoleAdmin,
-	"user-token":  RoleUser,
+var tokenRoleMap = loadTokenRoleMapFromEnv()
+
+// loadTokenRoleMapFromEnv loads the token-to-role mapping from the WORKFLOW_API_TOKENS environment variable.
+// The variable should be a comma-separated list of role:token pairs, e.g. "admin:supersecrettoken,user:othertoken".
+// Returns an empty map if the environment variable is not set or is invalid.
+func loadTokenRoleMapFromEnv() map[string]Role {
+	tokensRaw := getenv("WORKFLOW_API_TOKENS")
+	m := make(map[string]Role)
+
+	if strings.TrimSpace(tokensRaw) == "" {
+		log.Printf("[WARN] WORKFLOW_API_TOKENS environment variable is missing or empty")
+		return m
+	}
+
+	pairs := strings.Split(tokensRaw, ",")
+	for _, pair := range pairs {
+		pair = strings.TrimSpace(pair)
+		if pair == "" {
+			continue
+		}
+		parts := strings.SplitN(pair, ":", 2)
+		if len(parts) != 2 {
+			log.Printf("[WARN] Malformed token-role pair in WORKFLOW_API_TOKENS: '%s' (expected format 'role:token'), skipping", pair)
+			continue
+		}
+		role := strings.TrimSpace(parts[0])
+		token := strings.TrimSpace(parts[1])
+		if role == "" || token == "" {
+			log.Printf("[WARN] Empty role or token in WORKFLOW_API_TOKENS pair: '%s', skipping", pair)
+			continue
+		}
+		m[token] = Role(role)
+	}
+	log.Printf("[INFO] Loaded %d token-role pairs from WORKFLOW_API_TOKENS", len(m))
+	return m
+}
+
+func getenv(key string) string {
+	// Try to load from .secrets.json if present, else fall back to environment variable.
+	f, err := os.Open(".secrets.json")
+	if err == nil {
+		defer f.Close()
+		var secrets map[string]string
+		dec := json.NewDecoder(f)
+		if err := dec.Decode(&secrets); err == nil {
+			if v, ok := secrets[key]; ok {
+				return v
+			}
+		} else {
+			log.Printf("Warning: could not parse .secrets.json: %v", err)
+		}
+	}
+	return os.Getenv(key)
 }
 
 // methodPermissions maps gRPC method names to required roles.

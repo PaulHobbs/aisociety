@@ -9,7 +9,7 @@ Refactor the project's service management to consistently use Docker Compose for
 Utilize Docker Compose's override file mechanism (`-f` flag) to manage environment-specific configurations.
 
 1.  **Base Configuration (`docker-compose.yml`):**
-    *   Define all core services, including `postgres`, `node-service`, `workflow-service`, and the **newly added `scheduler` service**.
+    *   Define all core services, including `postgres`, `node`, `workflow`, and the **newly added `scheduler` service**.
     *   Configure services to use the standard `postgres` database by default.
     *   Define the `postgres-test` service for testing purposes.
 
@@ -19,7 +19,7 @@ Utilize Docker Compose's override file mechanism (`-f` flag) to manage environme
     *   Override the `scheduler` service definition to:
         *   Depend on `postgres-test` instead of `postgres`.
         *   Use the `DATABASE_URL` pointing to `postgres-test`.
-    *   Optionally, override `workflow-service` similarly if it needs to connect to `postgres-test` during E2E tests.
+    *   Optionally, override `workflow` similarly if it needs to connect to `postgres-test` during E2E tests.
 
 3.  **`Makefile` Updates:**
     *   Modify targets related to testing (e.g., `start-e2e-services`, `stop-e2e-services`, `rm-e2e-services`, `cleanup-e2e-services`, `test-e2e-workflow`) to use *both* compose files:
@@ -42,7 +42,7 @@ services:
   scheduler:
     build:
       context: .
-      # Assumes same Dockerfile as workflow-service, adjust if needed
+      # Assumes same Dockerfile as workflow, adjust if needed
       dockerfile: services/workflow/Dockerfile
     container_name: scheduler
     depends_on:
@@ -69,8 +69,8 @@ services:
       # Override DB connection
       DATABASE_URL: postgres://aisociety:aisociety@postgres-test:55432/aisociety_test_db?sslmode=disable
 
-  # Optional: Override workflow-service if needed for E2E tests
-  # workflow-service:
+  # Optional: Override workflow if needed for E2E tests
+  # workflow:
   #   depends_on:
   #     - postgres-test
   #   environment:

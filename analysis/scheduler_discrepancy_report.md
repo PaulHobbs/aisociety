@@ -12,7 +12,7 @@ Analyze `docker-compose.yml` and `Makefile` to determine if the absence of a 'sc
 
 ## Findings
 
-1.  **`docker-compose.yml`:** This file defines services for `postgres`, `node-service`, `workflow-service`, and `postgres-test`. It **does not** contain a service definition for `scheduler`.
+1.  **`docker-compose.yml`:** This file defines services for `postgres`, `node`, `workflow`, and `postgres-test`. It **does not** contain a service definition for `scheduler`.
 2.  **`Makefile`:**
     *   Contains targets (`stop-e2e-services`, `rm-e2e-services`, `cleanup-e2e-services`) that explicitly attempt to run `docker-compose stop scheduler` and `docker-compose rm -f scheduler`.
     *   Contains a target `start-scheduler` that executes the `scripts/start_scheduler.sh` script.
