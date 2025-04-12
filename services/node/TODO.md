@@ -1,4 +1,6 @@
 # Node Executor TODO
+**Architectural Note:**
+The Node Service is responsible for providing the agent harness (runtime environment) and for executing any tools or external resources required by agents during task execution. Tool usage should be handled internally within the Node Service, not by inserting additional nodes into the workflow graph for each tool call. Future enhancements and agent implementations must follow this separation of concerns.
 
 ## Completed
 * [x] Refactored server code:
@@ -9,11 +11,12 @@
 ## Next Steps
 * [ ] Add more unit tests for `package node` components.
 * [ ] Document the new project structure in `README.md`.
+* [ ] Document and test agent tool integration: Ensure agents can invoke tools as part of their execution, and that this is handled within the Node Service harness.
 
 ---
 
 * [ ] **(High Priority - CONV-003 Part 2)** Develop base agent/node framework/SDK:
-    * [ ] Implement Protobuf communication layer (server side for receiving tasks).
+    * [x] Implement Protobuf communication layer (server side for receiving tasks).
     * [ ] Standardize task execution lifecycle (receive, process, report).
     * [ ] Include helper functions for generating Protobuf outputs.
 * [ ] **(High Priority - CONV-002)** Implement initial agent roles:
