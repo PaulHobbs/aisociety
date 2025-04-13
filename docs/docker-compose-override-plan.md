@@ -22,7 +22,7 @@ Utilize Docker Compose's override file mechanism (`-f` flag) to manage environme
     *   Optionally, override `workflow` similarly if it needs to connect to `postgres-test` during E2E tests.
 
 3.  **`Makefile` Updates:**
-    *   Modify targets related to testing (e.g., `start-e2e-services`, `stop-e2e-services`, `rm-e2e-services`, `cleanup-e2e-services`, `test-e2e-workflow`) to use *both* compose files:
+    *   Modify targets related to testing (e.g., `start-services`, `stop-services`, `rm-services`, `cleanup-services`, `test-e2e-workflow`) to use *both* compose files:
         ```bash
         docker-compose -f docker-compose.yml -f docker-compose.test.yml up -d [service...]
         docker-compose -f docker-compose.yml -f docker-compose.test.yml stop [service...]

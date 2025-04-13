@@ -11,8 +11,11 @@ services:
       - postgres
     environment:
       DATABASE_URL: postgres://aisociety:aisociety@postgres:5432/aisociety_db?sslmode=disable
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
     ports:
       - "50051:50051"
+    # volumes:
+    #   - ./.secrets.json:/app/.secrets.json:ro
 
   workflow:
     build:

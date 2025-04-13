@@ -1,4 +1,4 @@
-# Use 'docker-compose up' or 'make start-e2e-services' to run services in containers.
+# Use 'docker-compose up' or 'make start-services' to run services in containers.
 
 PROTO_SRC=protos/workflow_node.proto
 TEST_DOCKER=docker-compose -f docker-compose.yml -f docker-compose.test.yml
@@ -32,17 +32,12 @@ scheduler-test:
 	go test -v ./services/scheduler/...
 
 
-
 .PHONY: test-pure test-e2e check-server
 
-check-server:
-	@python -c "import socket, sys; s=socket.socket(); s.settimeout(1); \
-err = s.connect_ex(('localhost', 50051)); s.close(); sys.exit(0 if err==0 else 1)" || (echo "Server not running, starting server..." && make start-node-server)
-
-test-pure: check-server
+test-pure: start-services
 	go test -v ./services/node -short | grep -v TestE2E | grep -v "short mode"
 
-test-e2e: check-server
+test-e2e: start-services
 	go test -v ./services/node -run '^TestE2E_'
 
 .PHONY: start-test-db test-workflow-storage
@@ -89,31 +84,24 @@ test-scheduler:
 	go test -v ./services/scheduler/...
 
 fuzz-scheduler:
-.PHONY: start-e2e-services stop-e2e-services rm-e2e-services test-e2e-workflow start-node-server
+.PHONY: start-services stop-services rm-services test-e2e-workflow
 
-start-node-server: build
-	@python -c "import json, os, subprocess; \
-f = open('.secrets.json'); key = json.load(f).get('OPENROUTER_API_KEY', ''); f.close(); \
-env = os.environ.copy(); env['OPENROUTER_API_KEY'] = key; \
-subprocess.Popen(['bin/node_server'], env=env)"
+start-services:
+	$(TEST_DOCKER) up -d --build
 
-start-e2e-services: start-test-db
-	$(TEST_DOCKER) up -d postgres-test
-	$(TEST_DOCKER) up -d node workflow scheduler
-
-stop-e2e-services:
+stop-services:
 	$(TEST_DOCKER) stop node workflow scheduler postgres-test
-rm-e2e-services:
+rm-services:
 	$(TEST_DOCKER) rm -f node workflow scheduler postgres-test
 
-cleanup-e2e-services:
+cleanup-services:
 	@echo "Cleaning up existing containers..."
 	$(TEST_DOCKER) stop node workflow scheduler postgres-test
 	$(TEST_DOCKER) rm -f node workflow scheduler postgres-test
 
-test-e2e-workflow: cleanup-e2e-services start-e2e-services
+test-e2e-workflow: cleanup-services start-services
 	WORKFLOW_TARGET=localhost:60052 go test -v ./services/workflow/api -run ^TestWorkflowLifecycle_E2E$
-	$(MAKE) stop-e2e-services
+	$(MAKE) stop-services
 	go test -fuzz=Fuzz --fuzztime=2s -v ./services/scheduler/internal
 
 .PHONY: test-e2e-no-start
@@ -124,3 +112,7 @@ test-e2e-no-start:
 .PHONY: logs-workflow
 logs-workflow:
 	$(TEST_DOCKER) logs workflow
+
+.PHONY: test-node-docker
+test-node-docker:
+	$(TEST_DOCKER) up --build --abort-on-container-exit --remove-orphans --exit-code-from node-test node-test

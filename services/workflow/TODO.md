@@ -27,7 +27,7 @@
 - [x] Implement `GetWorkflow` method: retrieve and deserialize workflow.
 - [x] Implement `CreateNode` and `UpdateNode` methods with protobuf serialization.
 - [x] Implement transactional `ApplyNodeEdits` method.
-- [ ] Write unit tests for `StateManager` methods.
+- [x] Write unit tests for `StateManager` methods.
 
 #### 2. Scheduler & Orchestration Engine
 - [x] Implement polling loop to scan active workflows.

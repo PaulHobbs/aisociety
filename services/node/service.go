@@ -3,6 +3,7 @@ package node
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"google.golang.org/protobuf/proto"
 	pb "paul.hobbs.page/aisociety/protos"
@@ -10,6 +11,16 @@ import (
 
 type Server struct {
 	pb.UnimplementedNodeServiceServer
+	toolHandler ToolHandler // Added ToolHandler field
+}
+
+// NewServer creates a new Node service server.
+// In a real application, dependencies like the ToolHandler would be injected.
+func NewServer() *Server {
+	return &Server{
+		// Initialize with default MCP handler for now
+		toolHandler: NewMCPToolHandler(nil, nil),
+	}
 }
 
 func (s *Server) ExecuteNode(ctx context.Context, req *pb.ExecuteNodeRequest) (*pb.ExecuteNodeResponse, error) {
@@ -29,6 +40,39 @@ func (s *Server) ExecuteNode(ctx context.Context, req *pb.ExecuteNodeRequest) (*
 		return nil, fmt.Errorf("ExecuteNode: assigned_task not provided in node")
 	}
 
+	// --- Tool Handling Delegation ---
+	// Attempt to handle the task using the configured ToolHandler
+	updatedNode, handled, toolErr := s.toolHandler.HandleToolExecution(ctx, node, agent, task)
+	if toolErr != nil {
+		// Handle unexpected errors within the tool handler itself
+		log.Printf("ERROR: Tool handler failed for node %s: %v", req.GetNodeId(), toolErr)
+		// Return a generic error or update node status to reflect internal error
+		// Cloning the original node to set error status
+		errorNode := proto.Clone(node).(*pb.Node)
+		errorNode.Status = pb.Status_TASK_ERROR
+		errorNode.Description = fmt.Sprintf("Internal error during tool handling: %v", toolErr)
+		// Optionally add a result to the task
+		if errorNode.AssignedTask == nil {
+			errorNode.AssignedTask = &pb.Task{}
+		}
+		errorNode.AssignedTask.Results = append(errorNode.AssignedTask.Results, &pb.Task_Result{
+			Status:  pb.Status_TASK_ERROR,
+			Summary: errorNode.Description,
+		})
+		return &pb.ExecuteNodeResponse{Node: errorNode}, nil // Return error node, but nil gRPC error
+	}
+
+	if handled {
+		// Tool handler processed the request (successfully or with a handled error like validation/auth failure)
+		// Return the node state as updated by the handler.
+		log.Printf("Tool handler processed node %s, returning updated node.", req.GetNodeId())
+		return &pb.ExecuteNodeResponse{Node: updatedNode}, nil
+	}
+
+	// --- If not handled by ToolHandler, proceed with Agent Execution ---
+	log.Printf("Task for node %s not handled by tool handler, proceeding with agent execution.", req.GetNodeId())
+
+	// --- Agent Selection Logic ---
 	// Construct prompt from task goal and upstream context
 	prompt := "Task: " + task.GetGoal() + "\n"
 	prompt += "Context from dependencies:\n"
@@ -41,7 +85,6 @@ func (s *Server) ExecuteNode(ctx context.Context, req *pb.ExecuteNodeRequest) (*
 	var aiResponse string
 	var agentErr error
 
-	// --- Agent Selection Logic ---
 	switch agent.GetAgentId() {
 	case FakeAgentID:
 		fmt.Println("Using Fake Agent")
@@ -54,17 +97,14 @@ func (s *Server) ExecuteNode(ctx context.Context, req *pb.ExecuteNodeRequest) (*
 
 	if agentErr != nil {
 		// Handle agent error - maybe set node status to TASK_ERROR
-		// For now, just return the error
-		return nil, fmt.Errorf("agent execution failed: %v", agentErr)
-		// TODO: Update node status to reflect error instead of returning gRPC error?
-		// updatedNode := proto.Clone(node).(*pb.Node)
-		// updatedNode.Status = pb.Status_TASK_ERROR
-		// updatedNode.Description = fmt.Sprintf("Agent error: %v", agentErr)
-		// return &pb.ExecuteNodeResponse{Node: updatedNode}, nil
+		updatedNode := proto.Clone(node).(*pb.Node)
+		updatedNode.Status = pb.Status_TASK_ERROR
+		updatedNode.Description = fmt.Sprintf("Agent error: %v", agentErr)
+		return &pb.ExecuteNodeResponse{Node: updatedNode}, nil
 	}
 
 	// Clone the input node to preserve all fields
-	updatedNode := proto.Clone(node).(*pb.Node)
+	updatedNode = proto.Clone(node).(*pb.Node)
 
 	// Update status and description based on successful agent execution
 	updatedNode.Status = pb.Status_PASS

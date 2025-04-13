@@ -19,3 +19,51 @@ The Node Service is responsible for providing the agent harness (the runtime env
 *   Separate services/packages for each distinct agent role or type.
 
 **Current Tasks:** See [[services/node/TODO.md]].
+
+---
+
+## MCP Tool Invocation
+
+### Overview
+
+The Node Service supports invoking Model Context Protocol (MCP) tools as part of agent task execution. MCP tools are modular, discoverable, and can be registered dynamically. Each tool defines its own input and output schema, and can be invoked by agents to perform specialized actions (e.g., summarization, data transformation, external API calls).
+
+### How MCP Tool Invocation Works
+
+- **Tool Registry:** Tools are registered in an `MCPToolRegistry` (see `mcp_tools.go`). The registry provides discovery and lookup of available tools.
+- **Tool Adapter:** The `MCPToolAdapter` interface defines how a tool is invoked. The default/mock implementation simply echoes input for testing, but real adapters can call external services or run custom logic.
+- **Invocation Flow:** When an agent's assigned task requests a tool (e.g., via a goal like `Call: tool-name`), the Node Service:
+  1. Looks up the tool in the registry.
+  2. Validates input against the tool's schema.
+  3. Invokes the tool via the adapter.
+  4. Returns the result in the task's output.
+
+### Adding a New MCP Tool
+
+1. **Define the Tool:**
+   - Create a new `MCPTool` struct with a unique name, description, and input/output schema.
+2. **Register the Tool:**
+   - Add the tool to the `InMemoryToolRegistry` (or your custom registry implementation).
+   - Example (see `mcp_tools.go`):
+     ```go
+     tool := MCPTool{
+         Name: "my-tool",
+         Description: "Does something useful",
+         InputSchema: map[string]string{"param1": "string"},
+         OutputSchema: map[string]string{"result": "string"},
+     }
+     registry := NewInMemoryToolRegistry([]MCPTool{tool})
+     ```
+3. **Implement the Adapter (Optional):**
+   - If your tool needs custom logic, implement the `MCPToolAdapter` interface.
+   - For testing, use `MockToolAdapter`.
+
+### Running MCP Tool Invocation Tests
+
+Comprehensive tests for MCP tool invocation (success, error, and edge cases) are in `node_test.go`. To run these tests:
+
+```sh
+make test-pure
+```
+
+This command runs all Node Service unit/integration tests, including MCP tool invocation scenarios.

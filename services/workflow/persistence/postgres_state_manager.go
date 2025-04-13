@@ -363,8 +363,8 @@ func (p *PostgresStateManager) GetNode(ctx context.Context, workflowID, nodeID s
 	var nodeBytes []byte
 	err := p.pool.QueryRow(ctx, query, workflowID, nodeID).Scan(&nodeBytes)
 	if err != nil {
-		if err.Error() == "no rows in result set" {
-			return nil, nil
+		if err == pgx.ErrNoRows {
+			return nil, pgx.ErrNoRows
 		}
 		return nil, fmt.Errorf("GetNode query failed: %w", err)
 	}
@@ -404,8 +404,28 @@ func (p *PostgresStateManager) UpdateNode(ctx context.Context, workflowID string
 	return nil
 }
 
-// FindReadyNodes is a stub implementation to satisfy scheduler.StateManager.
-// TODO: Implement actual query logic to find ready nodes.
+// FindReadyNodes returns all nodes with status PASS (1) across all workflows.
 func (p *PostgresStateManager) FindReadyNodes(ctx context.Context) ([]*pb.Node, error) {
-	return []*pb.Node{}, nil
+	rows, err := p.pool.Query(ctx, `SELECT node FROM nodes WHERE status = $1`, int32(pb.Status_PASS))
+	if err != nil {
+		return nil, fmt.Errorf("FindReadyNodes query failed: %w", err)
+	}
+	defer rows.Close()
+
+	var readyNodes []*pb.Node
+	for rows.Next() {
+		var nodeBytes []byte
+		if err := rows.Scan(&nodeBytes); err != nil {
+			return nil, fmt.Errorf("FindReadyNodes scan failed: %w", err)
+		}
+		var node pb.Node
+		if err := proto.Unmarshal(nodeBytes, &node); err != nil {
+			return nil, fmt.Errorf("FindReadyNodes unmarshal failed: %w", err)
+		}
+		readyNodes = append(readyNodes, &node)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("FindReadyNodes rows error: %w", err)
+	}
+	return readyNodes, nil
 }

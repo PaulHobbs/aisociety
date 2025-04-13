@@ -13,6 +13,12 @@ The Node Service is responsible for providing the agent harness (runtime environ
 * [ ] Document the new project structure in `README.md`.
 * [ ] Document and test agent tool integration: Ensure agents can invoke tools as part of their execution, and that this is handled within the Node Service harness.
 
+* [ ] **(High Priority)** Implement MCP tool invocation in agent harness
+    - See DESIGN.md for architectural details and requirements.
+    - [ ] Implement mechanism for agent harness to discover and invoke MCP service tools as part of node execution.
+    - [ ] Integrate MCP tool results into node/task outputs and workflow edits as needed.
+    - [ ] Handle errors, extensibility, and security as described in DESIGN.md.
+    - [ ] Add tests and documentation for MCP tool invocation in the Node Service.
 ---
 
 * [ ] **(High Priority - CONV-003 Part 2)** Develop base agent/node framework/SDK:

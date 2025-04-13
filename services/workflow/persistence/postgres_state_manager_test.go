@@ -123,6 +123,209 @@ func TestCreateAndGetNode(t *testing.T) {
 		t.Errorf("After update, got node %+v, want %+v", updatedNode, node)
 	}
 }
+func TestListWorkflows(t *testing.T) {
+	cleanDB(t)
+	ctx := context.Background()
+
+	// Initially, should be empty
+	ids, err := testManager.ListWorkflows(ctx)
+	if err != nil {
+		t.Fatalf("ListWorkflows failed: %v", err)
+	}
+	if len(ids) != 0 {
+		t.Errorf("Expected no workflows, got %d", len(ids))
+	}
+
+	// Add two workflows
+	wf1 := &Workflow{Name: "WF1", Description: "desc1", Status: pb.Status_UNKNOWN}
+	wf2 := &Workflow{Name: "WF2", Description: "desc2", Status: pb.Status_UNKNOWN}
+	id1, err := testManager.CreateWorkflow(ctx, wf1)
+	if err != nil {
+		t.Fatalf("CreateWorkflow 1 failed: %v", err)
+	}
+	id2, err := testManager.CreateWorkflow(ctx, wf2)
+	if err != nil {
+		t.Fatalf("CreateWorkflow 2 failed: %v", err)
+	}
+
+	ids, err = testManager.ListWorkflows(ctx)
+	if err != nil {
+		t.Fatalf("ListWorkflows after insert failed: %v", err)
+	}
+	if len(ids) != 2 {
+		t.Errorf("Expected 2 workflows, got %d", len(ids))
+	}
+	found1, found2 := false, false
+	for _, id := range ids {
+		if id == id1 {
+			found1 = true
+		}
+		if id == id2 {
+			found2 = true
+		}
+	}
+	if !found1 || !found2 {
+		t.Errorf("Workflow IDs not found in list: got %v, want %v and %v", ids, id1, id2)
+	}
+}
+
+func TestGetWorkflow_NotFound(t *testing.T) {
+	cleanDB(t)
+	ctx := context.Background()
+	_, err := testManager.GetWorkflow(ctx, "nonexistent-id")
+	if err == nil {
+		t.Errorf("Expected error for nonexistent workflow, got nil")
+	}
+}
+
+func TestGetNode_NotFound(t *testing.T) {
+	cleanDB(t)
+	ctx := context.Background()
+	_, err := testManager.GetNode(ctx, "nonexistent-wf", "nonexistent-node")
+	if err == nil {
+		t.Errorf("Expected error for nonexistent node, got nil")
+	}
+}
+
+func TestUpdateNode_NotFound(t *testing.T) {
+	cleanDB(t)
+	ctx := context.Background()
+	node := &pb.Node{
+		NodeId:      uuid.New().String(),
+		Description: "Should not exist",
+	}
+	err := testManager.UpdateNode(ctx, "nonexistent-wf", node)
+	if err == nil {
+		t.Errorf("Expected error for updating nonexistent node, got nil")
+	}
+}
+
+func TestCreateNode_InvalidWorkflow(t *testing.T) {
+	cleanDB(t)
+	ctx := context.Background()
+	node := &pb.Node{
+		NodeId:      uuid.New().String(),
+		Description: "Orphan node",
+	}
+	err := testManager.CreateNode(ctx, "nonexistent-wf", node)
+	if err == nil {
+		t.Errorf("Expected error for creating node in nonexistent workflow, got nil")
+	}
+}
+
+func TestFindReadyNodes(t *testing.T) {
+	cleanDB(t)
+	ctx := context.Background()
+	// No workflows/nodes: should return empty
+	nodes, err := testManager.FindReadyNodes(ctx)
+	if err != nil {
+		t.Fatalf("FindReadyNodes failed: %v", err)
+	}
+	if len(nodes) != 0 {
+		t.Errorf("Expected no ready nodes, got %d", len(nodes))
+	}
+
+	// Create a workflow and a node with Status_READY
+	wf := &Workflow{Name: "ReadyNodesWF", Description: "desc", Status: pb.Status_UNKNOWN}
+	_, err = testManager.CreateWorkflow(ctx, wf)
+	if err != nil {
+		t.Fatalf("CreateWorkflow failed: %v", err)
+	}
+	node := &pb.Node{
+		NodeId:      uuid.New().String(),
+		Description: "Ready Node",
+		Status:      pb.Status_RUNNING, // Not ready
+	}
+	err = testManager.CreateNode(ctx, wf.ID, node)
+	if err != nil {
+		t.Fatalf("CreateNode failed: %v", err)
+	}
+	// Update node to READY
+	node.Status = pb.Status_PASS // Let's assume PASS is considered ready for this test
+	err = testManager.UpdateNode(ctx, wf.ID, node)
+	if err != nil {
+		t.Fatalf("UpdateNode failed: %v", err)
+	}
+	// Now FindReadyNodes should return at least one node
+	nodes, err = testManager.FindReadyNodes(ctx)
+	if err != nil {
+		t.Fatalf("FindReadyNodes after insert failed: %v", err)
+	}
+	if len(nodes) == 0 {
+		t.Errorf("Expected at least one ready node, got 0")
+	}
+}
+
+func TestApplyNodeEdits_Unit(t *testing.T) {
+	cleanDB(t)
+	ctx := context.Background()
+	wf := &Workflow{Name: "ApplyEditsWF", Description: "desc", Status: pb.Status_UNKNOWN}
+	_, err := testManager.CreateWorkflow(ctx, wf)
+	if err != nil {
+		t.Fatalf("CreateWorkflow failed: %v", err)
+	}
+	node := &pb.Node{
+		NodeId:      uuid.New().String(),
+		Description: "Node for edits",
+	}
+	// Insert node
+	editInsert := &pb.NodeEdit{
+		Type: pb.NodeEdit_INSERT,
+		Node: node,
+	}
+	err = testManager.ApplyNodeEdits(ctx, wf.ID, []*pb.NodeEdit{editInsert})
+	if err != nil {
+		t.Fatalf("ApplyNodeEdits INSERT failed: %v", err)
+	}
+	// Update node
+	node.Description = "Edited"
+	editUpdate := &pb.NodeEdit{
+		Type: pb.NodeEdit_UPDATE,
+		Node: node,
+	}
+	err = testManager.ApplyNodeEdits(ctx, wf.ID, []*pb.NodeEdit{editUpdate})
+	if err != nil {
+		t.Fatalf("ApplyNodeEdits UPDATE failed: %v", err)
+	}
+	got, err := testManager.GetNode(ctx, wf.ID, node.NodeId)
+	if err != nil {
+		t.Fatalf("GetNode after update failed: %v", err)
+	}
+	if got.Description != "Edited" {
+		t.Errorf("Node description not updated, got %q", got.Description)
+	}
+	// Delete node
+	editDelete := &pb.NodeEdit{
+		Type: pb.NodeEdit_DELETE,
+		Node: &pb.Node{NodeId: node.NodeId},
+	}
+	err = testManager.ApplyNodeEdits(ctx, wf.ID, []*pb.NodeEdit{editDelete})
+	if err != nil {
+		t.Fatalf("ApplyNodeEdits DELETE failed: %v", err)
+	}
+	_, err = testManager.GetNode(ctx, wf.ID, node.NodeId)
+	if err == nil {
+		t.Errorf("Expected error after deleting node, got nil")
+	}
+	// Edge case: apply edit to nonexistent workflow
+	err = testManager.ApplyNodeEdits(ctx, "nonexistent-wf", []*pb.NodeEdit{editInsert})
+	if err == nil {
+		t.Errorf("Expected error for ApplyNodeEdits on nonexistent workflow, got nil")
+	}
+}
+
+func TestClose_Idempotent(t *testing.T) {
+	// Just ensure Close can be called multiple times without panic
+	err := testManager.Close()
+	if err != nil {
+		t.Errorf("Close failed: %v", err)
+	}
+	// Should be safe to call again
+	err = testManager.Close()
+	if err != nil {
+		t.Errorf("Second Close failed: %v", err)
+	}
+}
 
 func FuzzApplyNodeEdits(f *testing.F) {
 	// Clean database once before fuzzing starts
