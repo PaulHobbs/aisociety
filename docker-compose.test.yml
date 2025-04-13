@@ -39,6 +39,9 @@ services:
     command: ["postgres", "-c", "port=55432"]
     ports:
       - "55433:55432"
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+      - ./services/workflow/schema/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
 
   node-test:
     depends_on:
@@ -52,3 +55,6 @@ services:
       - DATABASE_URL=postgres://aisociety:aisociety@postgres-test:55432/aisociety_test_db?sslmode=disable
       - WORKFLOW_API_TOKENS=admin:testtoken
     command: go test -v ./services/node/...
+
+volumes:
+  postgres_test_data:
