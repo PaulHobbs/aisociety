@@ -20,6 +20,8 @@ type ToolHandler interface {
 	// the node status/description should be updated, handled should be true,
 	// and error should be nil (as the failure is part of the expected workflow).
 	HandleToolExecution(ctx context.Context, node *pb.Node, agent *pb.Agent, task *pb.Task) (updatedNode *pb.Node, handled bool, err error)
+	// Registry returns the MCPToolRegistry used by this handler.
+	Registry() MCPToolRegistry
 }
 
 // mcpToolHandler implements the ToolHandler interface for MCP tools.
@@ -57,6 +59,11 @@ func NewMCPToolHandler(registry MCPToolRegistry, adapter MCPToolAdapter) ToolHan
 		registry: registry,
 		adapter:  adapter,
 	}
+}
+
+// Registry returns the MCPToolRegistry used by this handler.
+func (h *mcpToolHandler) Registry() MCPToolRegistry {
+	return h.registry
 }
 
 // HandleToolExecution implements the ToolHandler interface.

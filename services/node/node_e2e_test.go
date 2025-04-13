@@ -10,13 +10,15 @@ import (
 	pb "paul.hobbs.page/aisociety/protos"
 )
 
+const e2eServerAddr = "localhost:60051"
+
 func TestE2E_ExecuteNode_RealAgent(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping testing in short mode")
 	}
 
 	// Set up a connection to the server.
-	conn, err := grpc.Dial(serverAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(e2eServerAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		t.Fatalf("did not connect: %v", err)
 	}
@@ -38,9 +40,9 @@ func TestE2E_ExecuteNode_RealAgent(t *testing.T) {
 			NodeId:      nodeID,
 			Description: "Node using real agent",
 			Agent: &pb.Agent{
-				AgentId:   "openrouter/quasar-alpha", // Real agent ID
+				AgentId:   "openrouter/optimus-alpha", // Real agent ID
 				Role:      "Explainer",
-				ModelType: "openrouter/quasar-alpha",
+				ModelType: "openrouter/optimus-alpha",
 			},
 			AssignedTask: &pb.Task{
 				Id:   "task-real-1",

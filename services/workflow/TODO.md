@@ -7,7 +7,7 @@
 *   [x] Low-level design for workflow service state machine & storage, & interface with node service
 *   [x] Implement workflow state persistence mechanism.
 *   [x] Develop initial scheduler logic (simple capability matching).
-*   [ ] Build basic API for defining and launching workflows.
+*   [x] Build basic API for defining and launching workflows.
 *   [ ] Implement event emission for key state changes.
 *   [ ] Set up basic monitoring dashboard/interface.
 *   [ ] Plan/Implement API Security (Authentication/Authorization) (Ref: DESIGN.md L117)

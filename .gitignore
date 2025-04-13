@@ -4,4 +4,5 @@
 paul.hobbs.page
 .obsidian
 .secrets.json
+*.log
 bin/

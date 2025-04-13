@@ -23,6 +23,13 @@ func NewServer() *Server {
 	}
 }
 
+// NewServerWithRegistry creates a new Node service server with a provided MCPToolRegistry.
+func NewServerWithRegistry(registry MCPToolRegistry) *Server {
+	return &Server{
+		toolHandler: NewMCPToolHandler(registry, nil),
+	}
+}
+
 func (s *Server) ExecuteNode(ctx context.Context, req *pb.ExecuteNodeRequest) (*pb.ExecuteNodeResponse, error) {
 	fmt.Printf("ExecuteNode request received for node: %s in workflow: %s\n", req.GetNodeId(), req.GetWorkflowId())
 
@@ -39,34 +46,88 @@ func (s *Server) ExecuteNode(ctx context.Context, req *pb.ExecuteNodeRequest) (*
 	if task == nil {
 		return nil, fmt.Errorf("ExecuteNode: assigned_task not provided in node")
 	}
-
-	// --- Tool Handling Delegation ---
-	// Attempt to handle the task using the configured ToolHandler
-	updatedNode, handled, toolErr := s.toolHandler.HandleToolExecution(ctx, node, agent, task)
-	if toolErr != nil {
-		// Handle unexpected errors within the tool handler itself
-		log.Printf("ERROR: Tool handler failed for node %s: %v", req.GetNodeId(), toolErr)
-		// Return a generic error or update node status to reflect internal error
-		// Cloning the original node to set error status
-		errorNode := proto.Clone(node).(*pb.Node)
-		errorNode.Status = pb.Status_TASK_ERROR
-		errorNode.Description = fmt.Sprintf("Internal error during tool handling: %v", toolErr)
-		// Optionally add a result to the task
-		if errorNode.AssignedTask == nil {
-			errorNode.AssignedTask = &pb.Task{}
-		}
-		errorNode.AssignedTask.Results = append(errorNode.AssignedTask.Results, &pb.Task_Result{
-			Status:  pb.Status_TASK_ERROR,
-			Summary: errorNode.Description,
-		})
-		return &pb.ExecuteNodeResponse{Node: errorNode}, nil // Return error node, but nil gRPC error
+	// Make MCPToolRegistry available throughout the function
+	var registry MCPToolRegistry
+	if s.toolHandler != nil {
+		registry = s.toolHandler.Registry()
 	}
 
-	if handled {
-		// Tool handler processed the request (successfully or with a handled error like validation/auth failure)
-		// Return the node state as updated by the handler.
-		log.Printf("Tool handler processed node %s, returning updated node.", req.GetNodeId())
-		return &pb.ExecuteNodeResponse{Node: updatedNode}, nil
+	updatedNode := node
+
+	// --- MCP Tool Invocation: If task goal starts with "Call: toolname", invoke MCP tool ---
+	if task != nil && len(task.Goal) > 6 && task.Goal[:5] == "Call:" {
+		toolName := ""
+		// Parse tool name: "Call: toolname" or "Call: toolname {...json...}"
+		goalRemainder := task.Goal[5:]
+		for i, c := range goalRemainder {
+			if c == ' ' || c == '{' {
+				toolName = goalRemainder[:i]
+				break
+			}
+		}
+		if toolName == "" {
+			toolName = goalRemainder
+		}
+		// For now, stub: parameters are empty. (Future: parse from goal or task fields)
+		inputParams := map[string]interface{}{}
+
+		// Use MockToolAdapter for all tools for now
+		adapterSelector := func(tool MCPTool) MCPToolAdapter {
+			return &MockToolAdapter{}
+		}
+		// Use registry from toolHandler if available, else skip
+		var registry MCPToolRegistry
+		if s.toolHandler != nil {
+			registry = s.toolHandler.Registry()
+		}
+		if registry != nil {
+			resultMap, err := InvokeMCPTool(ctx, toolName, inputParams, registry, adapterSelector)
+			updatedNode = proto.Clone(node).(*pb.Node)
+			assignedTask := updatedNode.GetAssignedTask()
+			if assignedTask == nil {
+				assignedTask = &pb.Task{}
+				updatedNode.AssignedTask = assignedTask
+			}
+			newResult := &pb.Task_Result{
+				Artifacts: map[string]string{},
+			}
+			if err != nil {
+				updatedNode.Status = pb.Status_TASK_ERROR
+				updatedNode.Description = fmt.Sprintf("MCP tool error: %v", err)
+				newResult.Status = pb.Status_TASK_ERROR
+				newResult.Summary = "MCP tool invocation failed"
+				newResult.Output = err.Error()
+			} else {
+				// Map resultMap fields to proto
+				statusStr, _ := resultMap["status"].(string)
+				switch statusStr {
+				case "PASS":
+					updatedNode.Status = pb.Status_PASS
+					newResult.Status = pb.Status_PASS
+				case "FAIL":
+					updatedNode.Status = pb.Status_FAIL
+					newResult.Status = pb.Status_FAIL
+				case "TIMEOUT":
+					updatedNode.Status = pb.Status_TIMEOUT
+					newResult.Status = pb.Status_TIMEOUT
+				default:
+					updatedNode.Status = pb.Status_UNKNOWN
+					newResult.Status = pb.Status_UNKNOWN
+				}
+				if summary, ok := resultMap["summary"].(string); ok {
+					newResult.Summary = summary
+				}
+				if output, ok := resultMap["output"].(string); ok {
+					newResult.Output = output
+				}
+				if artifacts, ok := resultMap["artifacts"].(map[string]string); ok {
+					newResult.Artifacts = artifacts
+				}
+				updatedNode.Description = fmt.Sprintf("MCP tool (%s) completed. %s", toolName, newResult.Summary)
+			}
+			assignedTask.Results = append(assignedTask.Results, newResult)
+			return &pb.ExecuteNodeResponse{Node: updatedNode}, nil
+		}
 	}
 
 	// --- If not handled by ToolHandler, proceed with Agent Execution ---
@@ -91,7 +152,7 @@ func (s *Server) ExecuteNode(ctx context.Context, req *pb.ExecuteNodeRequest) (*
 		aiResponse, agentErr = callFakeAgent(ctx, agent, prompt, task.GetGoal())
 	default:
 		fmt.Println("Using Real Agent (OpenRouter)")
-		aiResponse, agentErr = callRealAgent(ctx, agent, prompt)
+		aiResponse, agentErr = callRealAgent(ctx, agent, prompt, registry)
 	}
 	// --- End Agent Selection ---
 

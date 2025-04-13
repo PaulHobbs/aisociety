@@ -17,6 +17,7 @@ services:
     environment:
       DATABASE_URL: postgres://aisociety:aisociety@postgres-test:55432/aisociety_test_db?sslmode=disable
       PORT: 60052
+      WORKFLOW_API_TOKENS: admin:testtoken
     ports:
       - "60052:60052"
 
@@ -49,4 +50,5 @@ services:
     environment:
       - PORT=60051
       - DATABASE_URL=postgres://aisociety:aisociety@postgres-test:55432/aisociety_test_db?sslmode=disable
+      - WORKFLOW_API_TOKENS=admin:testtoken
     command: go test -v ./services/node/...

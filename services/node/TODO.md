@@ -1,4 +1,5 @@
 # Node Executor TODO
+
 **Architectural Note:**
 The Node Service is responsible for providing the agent harness (runtime environment) and for executing any tools or external resources required by agents during task execution. Tool usage should be handled internally within the Node Service, not by inserting additional nodes into the workflow graph for each tool call. Future enhancements and agent implementations must follow this separation of concerns.
 
@@ -9,7 +10,8 @@ The Node Service is responsible for providing the agent harness (runtime environ
   * Resolved package conflicts and improved project modularity.
 
 ## Next Steps
-* [ ] Add more unit tests for `package node` components.
+* [ ] Pass the available tools to the OpenAI/Openrouter API when invoking an agent
+* [x] Add more unit tests for `package node` components.
 * [ ] Document the new project structure in `README.md`.
 * [ ] Document and test agent tool integration: Ensure agents can invoke tools as part of their execution, and that this is handled within the Node Service harness.
 

@@ -1,7 +1,7 @@
 # Use 'docker-compose up' or 'make start-services' to run services in containers.
 
 PROTO_SRC=protos/workflow_node.proto
-TEST_DOCKER=docker-compose -f docker-compose.yml -f docker-compose.test.yml
+TEST_DOCKER=./test-docker-compose.sh
 
 all: proto build
 
@@ -31,14 +31,13 @@ scheduler-build: bin/scheduler_service
 scheduler-test:
 	go test -v ./services/scheduler/...
 
-
 .PHONY: test-pure test-e2e check-server
 
 test-pure: start-services
-	go test -v ./services/node -short | grep -v TestE2E | grep -v "short mode"
+	go test -v ./services/node/... -short | grep -v TestE2E | grep -v "short mode"
 
 test-e2e: start-services
-	go test -v ./services/node -run '^TestE2E_'
+	go test -v ./services/node/... -run '^TestE2E_'
 
 .PHONY: start-test-db test-workflow-storage
 
@@ -84,9 +83,9 @@ test-scheduler:
 	go test -v ./services/scheduler/...
 
 fuzz-scheduler:
-.PHONY: start-services stop-services rm-services test-e2e-workflow
+.PHONY: stop-services rm-services test-e2e-workflow
 
-start-services:
+start-services: $(GO_SOURCES)
 	$(TEST_DOCKER) up -d --build
 
 stop-services:

@@ -376,6 +376,7 @@ func (p *PostgresStateManager) GetNode(ctx context.Context, workflowID, nodeID s
 	}
 	return &node, nil
 }
+
 func (p *PostgresStateManager) UpdateNode(ctx context.Context, workflowID string, node *pb.Node) error {
 	// Wrap node in a temporary NodeEdit to reuse serialization and update logic
 	edit := &pb.NodeEdit{
